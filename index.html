@@ -81,61 +81,6 @@
         .nav-links a:hover {
             color: var(--accent);
         }
-        
-        .hamburger {
-            display: none;
-            cursor: pointer;
-            z-index: 1001;
-        }
-
-        .hamburger .line {
-            width: 25px;
-            height: 3px;
-            background-color: var(--text-primary);
-            margin: 5px;
-            transition: all 0.3s ease-in-out;
-        }
-        
-        .overlay {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: rgba(0,0,0, 0.95);
-            overflow-x: hidden;
-            transition: 0.5s;
-        }
-
-        .overlay-content {
-            position: relative;
-            top: 25%;
-            width: 100%;
-            text-align: center;
-            margin-top: 30px;
-        }
-
-        .overlay a {
-            padding: 15px;
-            text-decoration: none;
-            font-size: 36px;
-            color: var(--text-primary);
-            display: block;
-            transition: 0.3s;
-        }
-
-        .overlay a:hover, .overlay a:focus {
-            color: var(--accent);
-        }
-
-        .overlay .closebtn {
-            position: absolute;
-            top: 20px;
-            right: 45px;
-            font-size: 60px;
-        }
-
 
         .cta-button {
             background-color: var(--accent);
@@ -360,12 +305,18 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .nav-links {
-                display: none;
+            .navbar {
+                flex-direction: column;
+                align-items: flex-start;
             }
 
-            .hamburger {
-                display: block;
+            .nav-links {
+                margin-top: 20px;
+                flex-direction: column;
+            }
+
+            .nav-links li {
+                margin: 10px 0;
             }
 
             .hero h1 {
@@ -379,16 +330,6 @@
     </style>
 </head>
 <body>
-    <div id="myNav" class="overlay">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-        <div class="overlay-content">
-            <a href="#what-we-do" onclick="closeNav()">What We Do</a>
-            <a href="#products" onclick="closeNav()">Products</a>
-            <a href="#team" onclick="closeNav()">Meet The Team</a>
-            <a href="#contact" onclick="closeNav()">Contact</a>
-        </div>
-    </div>
-
     <!-- Header -->
     <header>
         <div class="container">
@@ -401,11 +342,6 @@
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <button class="cta-button">Explore Designs</button>
-                <div class="hamburger" onclick="openNav()">
-                    <div class="line"></div>
-                    <div class="line"></div>
-                    <div class="line"></div>
-                </div>
             </nav>
         </div>
     </header>
@@ -550,14 +486,6 @@
     </footer>
 
     <script>
-        function openNav() {
-            document.getElementById("myNav").style.width = "100%";
-        }
-
-        function closeNav() {
-            document.getElementById("myNav").style.width = "0%";
-        }
-        
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
