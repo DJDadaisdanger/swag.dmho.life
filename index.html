@@ -376,6 +376,18 @@
                 font-size: 2rem;
             }
         }
+
+        /* Animation Classes */
+        .scroll-hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .scroll-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -577,17 +589,14 @@
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.style.opacity = 1;
-                    entry.target.style.transform = 'translateY(0)';
+                    entry.target.classList.add('scroll-visible');
                 }
             });
         }, observerOptions);
 
         // Observe service cards, product cards, and team members
         document.querySelectorAll('.service-card, .product-card, .team-member').forEach(el => {
-            el.style.opacity = 0;
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            el.classList.add('scroll-hidden');
             observer.observe(el);
         });
     </script>
