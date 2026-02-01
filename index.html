@@ -559,13 +559,23 @@
         }
         
         // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+        document.addEventListener('click', function (e) {
+            const anchor = e.target.closest('a[href^="#"]');
+            if (anchor) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
+                const targetId = anchor.getAttribute('href');
+                try {
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                } catch (error) {
+                    // Ignore invalid selectors like '#'
+                    console.warn('Smooth scroll invalid target:', targetId);
+                }
+            }
         });
 
         // Simple animation on scroll
