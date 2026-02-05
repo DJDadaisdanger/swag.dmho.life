@@ -26,30 +26,28 @@
         }
         container.appendChild(fragment);
 
-        const elements = Array.from(container.children);
-
         // Benchmark 1: Inline Styles
         const startInline = performance.now();
-        elements.forEach(el => {
+        for (const el of container.children) {
             el.style.opacity = 0;
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s, transform 0.5s';
-        });
+        }
         const endInline = performance.now();
         const timeInline = endInline - startInline;
         console.log(`Inline Style Time: ${timeInline.toFixed(2)}ms`);
 
         // Reset
-        elements.forEach(el => {
+        for (const el of container.children) {
             el.style = '';
             el.className = '';
-        });
+        }
 
         // Benchmark 2: Class List
         const startClass = performance.now();
-        elements.forEach(el => {
+        for (const el of container.children) {
             el.classList.add('test-class');
-        });
+        }
         const endClass = performance.now();
         const timeClass = endClass - startClass;
         console.log(`Class List Time: ${timeClass.toFixed(2)}ms`);
