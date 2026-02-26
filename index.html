@@ -23,6 +23,10 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             background-color: var(--bg-dark);
             color: var(--text-primary);
@@ -387,6 +391,18 @@
                 font-size: 2rem;
             }
         }
+
+        /* Scroll Animations */
+        .scroll-hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .scroll-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body>
@@ -435,17 +451,17 @@
         <div class="container">
             <h2 class="section-title">What We <span>Do</span></h2>
             <div class="services">
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">🎭</div>
                     <h3>Prank Items</h3>
                     <p>Hilarious designs perfect for pranking your friends and loved ones. From subtle jokes to outrageous statements.</p>
                 </div>
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">👕</div>
                     <h3>Everyday Basics</h3>
                     <p>Quality t-shirts, mugs, and accessories with clean, simple designs for your daily wear and use. Dare to wear this in public?</p>
                 </div>
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">💡</div>
                     <h3>Your Designs</h3>
                     <p>Submit your own designs and ideas. We'll bring them to life on high-quality products you'll love.</p>
@@ -459,7 +475,7 @@
         <div class="container">
             <h2 class="section-title">Our <span>Products</span></h2>
             <div class="products">
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">👕</div>
                     <div class="product-info">
                         <h3>Custom T-Shirts</h3>
@@ -467,7 +483,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">☕</div>
                     <div class="product-info">
                         <h3>Magic & Printed Mugs</h3>
@@ -475,7 +491,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">🧢</div>
                     <div class="product-info">
                         <h3>Custom Caps</h3>
@@ -483,7 +499,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">📦</div>
                     <div class="product-info">
                         <h3>Surprise Mystery Box</h3>
@@ -500,25 +516,25 @@
         <div class="container">
             <h2 class="section-title">Meet The <span>Minds</span></h2>
             <div class="team">
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
-                        <img src="assets/afk.webp" alt="AFK - The Artist">
+                        <img src="assets/afk.webp" alt="AFK - The Artist" loading="lazy">
                     </div>
                     <h3 class="member-name">AFK</h3>
                     <p class="member-role">The Artist</p>
                     <p>Creative genius behind all our designs. Turns ideas into visual masterpieces.</p>
                 </div>
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
-                              <img src="https://avatars.githubusercontent.com/u/74598401?v=4" alt="42">
+                              <img src="https://avatars.githubusercontent.com/u/74598401?v=4" alt="42" loading="lazy">
                     </div>
                     <h3 class="member-name">n3rdium</h3>
                     <p class="member-role">Backend Wizard</p>
                     <p>Makes sure everything runs smoothly behind the scenes. Code magician.</p>
                 </div>
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
-                        <img src="assets/djdada.webp" alt="DJDada - Visionary & UI/UX Designer">
+                        <img src="assets/djdada.webp" alt="DJDada - Visionary & UI/UX Designer" loading="lazy">
                     </div>
                     <h3 class="member-name">DJDada</h3>
                     <p class="member-role">Visionary & UI/UX Designer</p>
@@ -561,23 +577,14 @@
     </footer>
 
     <script>
+        const myNav = document.getElementById("myNav");
         function openNav() {
-            document.getElementById("myNav").style.width = "100%";
+            myNav.style.width = "100%";
         }
 
         function closeNav() {
-            document.getElementById("myNav").style.width = "0%";
+            myNav.style.width = "0%";
         }
-        
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
 
         // Simple animation on scroll
         const observerOptions = {
@@ -588,7 +595,7 @@
         const observer = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.classList.add('scroll-visible');
                     observer.unobserve(entry.target);
                 }
             });
@@ -596,7 +603,6 @@
 
         // Observe service cards, product cards, and team members
         document.querySelectorAll('.service-card, .product-card, .team-member').forEach(el => {
-            el.classList.add('fade-in-on-scroll');
             observer.observe(el);
         });
     </script>
