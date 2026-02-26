@@ -91,6 +91,9 @@
             display: none;
             cursor: pointer;
             z-index: 1001;
+            background: none;
+            border: none;
+            padding: 0;
         }
 
         .hamburger .line {
@@ -408,7 +411,7 @@
 </head>
 <body>
     <div id="myNav" class="overlay">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()" role="button" aria-label="Close navigation menu">&times;</a>
         <div class="overlay-content">
             <a href="#what-we-do" onclick="closeNav()">What We Do</a>
             <a href="#products" onclick="closeNav()">Products</a>
@@ -429,11 +432,11 @@
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <button class="cta-button">Explore Designs</button>
-                <div class="hamburger" onclick="openNav()">
+                <button class="hamburger" onclick="openNav()" aria-label="Open navigation menu" aria-expanded="false">
                     <div class="line"></div>
                     <div class="line"></div>
                     <div class="line"></div>
-                </div>
+                </button>
             </nav>
         </div>
     </header>
@@ -579,12 +582,16 @@
 
     <script>
         const myNav = document.getElementById("myNav");
+        const hamburgerBtn = document.querySelector('.hamburger');
+
         function openNav() {
             myNav.style.width = "100%";
+            if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
         }
 
         function closeNav() {
             myNav.style.width = "0%";
+            if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
         }
 
         // Simple animation on scroll
