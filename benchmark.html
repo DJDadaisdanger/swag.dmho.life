@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Benchmark: Inline Style vs Class</title>
+    <style>
+        .test-class {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script>
+        const count = 20000;
+        const container = document.getElementById('container');
+
+        // Create elements
+        const fragment = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+            const div = document.createElement('div');
+            fragment.appendChild(div);
+        }
+        container.appendChild(fragment);
+
+        const elements = Array.from(container.children);
+
+        // Benchmark 1: Inline Styles
+        const startInline = performance.now();
+        elements.forEach(el => {
+            el.style.opacity = 0;
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+        });
+        const endInline = performance.now();
+        const timeInline = endInline - startInline;
+        console.log(`Inline Style Time: ${timeInline.toFixed(2)}ms`);
+
+        // Reset
+        elements.forEach(el => {
+            el.style = '';
+            el.className = '';
+        });
+
+        // Benchmark 2: Class List
+        const startClass = performance.now();
+        elements.forEach(el => {
+            el.classList.add('test-class');
+        });
+        const endClass = performance.now();
+        const timeClass = endClass - startClass;
+        console.log(`Class List Time: ${timeClass.toFixed(2)}ms`);
+
+        // Display results
+        const results = document.createElement('div');
+        results.innerHTML = `
+            <h2>Results (${count} elements)</h2>
+            <p>Inline Style: ${timeInline.toFixed(2)}ms</p>
+            <p>Class List: ${timeClass.toFixed(2)}ms</p>
+            <p>Improvement: ${((timeInline - timeClass) / timeInline * 100).toFixed(2)}%</p>
+        `;
+        document.body.insertBefore(results, container);
+    </script>
+</body>
+</html>
