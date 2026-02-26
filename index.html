@@ -593,6 +593,7 @@
 
         // Observe service cards, product cards, and team members
         document.querySelectorAll('.service-card, .product-card, .team-member').forEach(el => {
+            el.classList.add('scroll-hidden');
             observer.observe(el);
         });
     </script>
