@@ -602,19 +602,18 @@
         };
 
         const observer = new IntersectionObserver((entries, observer) => {
-            entries.forEach(entry => {
+            for (const entry of entries) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('scroll-visible');
                     observer.unobserve(entry.target);
                 }
-            });
+            }
         }, observerOptions);
 
         // Observe service cards, product cards, and team members
-        document.querySelectorAll('.service-card, .product-card, .team-member').forEach(el => {
-            el.classList.add('scroll-hidden');
+        for (const el of document.querySelectorAll('.service-card, .product-card, .team-member')) {
             observer.observe(el);
-        });
+        }
     </script>
 </body>
 </html>
