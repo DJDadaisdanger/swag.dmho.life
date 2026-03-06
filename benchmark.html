@@ -49,7 +49,7 @@
             el.style.opacity = 0;
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s, transform 0.5s';
-        });
+        }
         const endInline = performance.now();
         const timeInline = endInline - startInline;
         console.log(`Legacy Inline Style Time: ${timeInline.toFixed(2)}ms`);
