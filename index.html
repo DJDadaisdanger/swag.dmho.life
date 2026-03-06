@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SWAG</title>
+    <link rel="stylesheet" href="assets/css/style.css">
     <style>
         :root {
             --bg-dark: #121212;
@@ -21,6 +22,10 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -86,6 +91,9 @@
             display: none;
             cursor: pointer;
             z-index: 1001;
+            background: none;
+            border: none;
+            padding: 0;
         }
 
         .hamburger .line {
@@ -363,6 +371,17 @@
             font-size: 0.9rem;
         }
 
+        .fade-in-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
@@ -382,10 +401,12 @@
             }
         }
 
+        /* Scroll Animations */
         .scroll-hidden {
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.5s, transform 0.5s;
+            will-change: opacity, transform;
         }
 
         .scroll-visible {
@@ -396,7 +417,7 @@
 </head>
 <body>
     <div id="myNav" class="overlay">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()" role="button" aria-label="Close navigation menu">&times;</a>
         <div class="overlay-content">
             <a href="#what-we-do" onclick="closeNav()">What We Do</a>
             <a href="#products" onclick="closeNav()">Products</a>
@@ -417,11 +438,11 @@
                     <li><a href="#contact">Contact</a></li>
                 </ul>
                 <button class="cta-button">Explore Designs</button>
-                <div class="hamburger" onclick="openNav()">
+                <button class="hamburger" onclick="openNav()" aria-label="Open navigation menu" aria-expanded="false">
                     <div class="line"></div>
                     <div class="line"></div>
                     <div class="line"></div>
-                </div>
+                </button>
             </nav>
         </div>
     </header>
@@ -440,17 +461,17 @@
         <div class="container">
             <h2 class="section-title">What We <span>Do</span></h2>
             <div class="services">
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">🎭</div>
                     <h3>Prank Items</h3>
                     <p>Hilarious designs perfect for pranking your friends and loved ones. From subtle jokes to outrageous statements.</p>
                 </div>
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">👕</div>
                     <h3>Everyday Basics</h3>
                     <p>Quality t-shirts, mugs, and accessories with clean, simple designs for your daily wear and use. Dare to wear this in public?</p>
                 </div>
-                <div class="service-card">
+                <div class="scroll-hidden service-card">
                     <div class="service-icon">💡</div>
                     <h3>Your Designs</h3>
                     <p>Submit your own designs and ideas. We'll bring them to life on high-quality products you'll love.</p>
@@ -464,7 +485,7 @@
         <div class="container">
             <h2 class="section-title">Our <span>Products</span></h2>
             <div class="products">
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">👕</div>
                     <div class="product-info">
                         <h3>Custom T-Shirts</h3>
@@ -472,7 +493,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">☕</div>
                     <div class="product-info">
                         <h3>Magic & Printed Mugs</h3>
@@ -480,7 +501,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">🧢</div>
                     <div class="product-info">
                         <h3>Custom Caps</h3>
@@ -488,7 +509,7 @@
                         <button class="cta-button">Explore Designs</button>
                     </div>
                 </div>
-                <div class="product-card">
+                <div class="scroll-hidden product-card">
                     <div class="product-image">📦</div>
                     <div class="product-info">
                         <h3>Surprise Mystery Box</h3>
@@ -505,7 +526,7 @@
         <div class="container">
             <h2 class="section-title">Meet The <span>Minds</span></h2>
             <div class="team">
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
                         <img src="assets/afk.webp" alt="AFK - The Artist" loading="lazy">
                     </div>
@@ -513,7 +534,7 @@
                     <p class="member-role">The Artist</p>
                     <p>Creative genius behind all our designs. Turns ideas into visual masterpieces.</p>
                 </div>
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
                               <img src="https://avatars.githubusercontent.com/u/74598401?v=4" alt="42" loading="lazy">
                     </div>
@@ -521,7 +542,7 @@
                     <p class="member-role">Backend Wizard</p>
                     <p>Makes sure everything runs smoothly behind the scenes. Code magician.</p>
                 </div>
-                <div class="team-member">
+                <div class="scroll-hidden team-member">
                     <div class="member-avatar">
                         <img src="assets/djdada.webp" alt="DJDada - Visionary & UI/UX Designer" loading="lazy">
                     </div>
@@ -567,23 +588,17 @@
 
     <script>
         const myNav = document.getElementById("myNav");
+        const hamburgerBtn = document.querySelector('.hamburger');
+
         function openNav() {
-            myNav.classList.add("active");
+            myNav.style.width = "100%";
+            if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
         }
 
         function closeNav() {
-            myNav.classList.remove("active");
+            myNav.style.width = "0%";
+            if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'false');
         }
-        
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
 
         // Simple animation on scroll
         const observerOptions = {
@@ -591,19 +606,19 @@
             rootMargin: '0px 0px -50px 0px'
         };
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+        const observer = new IntersectionObserver((entries, observer) => {
+            for (const entry of entries) {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('scroll-visible');
+                    observer.unobserve(entry.target);
                 }
-            });
+            }
         }, observerOptions);
 
         // Observe service cards, product cards, and team members
-        document.querySelectorAll('.service-card, .product-card, .team-member').forEach(el => {
-            el.classList.add('scroll-hidden');
+        for (const el of document.querySelectorAll('.service-card, .product-card, .team-member')) {
             observer.observe(el);
-        });
+        }
     </script>
 </body>
 </html>
