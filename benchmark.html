@@ -26,41 +26,40 @@
         }
         container.appendChild(fragment);
 
-        const elements = Array.from(container.children);
+        const elementsArray = Array.from(container.children);
 
-        // Benchmark 1: Inline Styles
+        // Benchmark 1: Optimized Class Updates (Task Target)
+        const startClass = performance.now();
+        for (const el of container.children) {
+            el.classList.add('test-class');
+        }
+        const endClass = performance.now();
+        const timeClass = endClass - startClass;
+        console.log(`Optimized Class Time: ${timeClass.toFixed(2)}ms`);
+
+        // Reset
+        for (const el of container.children) {
+            el.style = '';
+            el.className = '';
+        }
+
+        // Benchmark 2: Legacy Inline Styles (For Comparison)
         const startInline = performance.now();
-        for (let i = 0, len = elements.length; i < len; i++) {
-            const el = elements[i];
+        elementsArray.forEach(el => {
             el.style.opacity = 0;
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s, transform 0.5s';
         }
         const endInline = performance.now();
         const timeInline = endInline - startInline;
-        console.log(`Inline Style Time: ${timeInline.toFixed(2)}ms`);
-
-        // Reset
-        elements.forEach(el => {
-            el.style = '';
-            el.className = '';
-        });
-
-        // Benchmark 2: Class List
-        const startClass = performance.now();
-        elements.forEach(el => {
-            el.classList.add('test-class');
-        });
-        const endClass = performance.now();
-        const timeClass = endClass - startClass;
-        console.log(`Class List Time: ${timeClass.toFixed(2)}ms`);
+        console.log(`Legacy Inline Style Time: ${timeInline.toFixed(2)}ms`);
 
         // Display results
         const results = document.createElement('div');
         results.innerHTML = `
             <h2>Results (${count} elements)</h2>
-            <p>Inline Style: ${timeInline.toFixed(2)}ms</p>
-            <p>Class List: ${timeClass.toFixed(2)}ms</p>
+            <p>Optimized Class: ${timeClass.toFixed(2)}ms</p>
+            <p>Legacy Inline Style: ${timeInline.toFixed(2)}ms</p>
             <p>Improvement: ${((timeInline - timeClass) / timeInline * 100).toFixed(2)}%</p>
         `;
         document.body.insertBefore(results, container);
