@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Benchmark: Inline Style vs Class</title>
+    <title>Benchmark: Live Collection vs Static Array</title>
     <style>
         .test-class {
             opacity: 0;
@@ -28,14 +28,14 @@
 
         const elementsArray = Array.from(container.children);
 
-        // Benchmark 1: Optimized Class Updates (Task Target)
-        const startClass = performance.now();
+        // Benchmark 1: Live Collection
+        const startLive = performance.now();
         for (const el of container.children) {
             el.classList.add('test-class');
         }
-        const endClass = performance.now();
-        const timeClass = endClass - startClass;
-        console.log(`Optimized Class Time: ${timeClass.toFixed(2)}ms`);
+        const endLive = performance.now();
+        const timeLive = endLive - startLive;
+        console.log(`Live Collection Time: ${timeLive.toFixed(2)}ms`);
 
         // Reset
         for (const el of container.children) {
@@ -43,24 +43,24 @@
             el.className = '';
         }
 
-        // Benchmark 2: Legacy Inline Styles (For Comparison)
-        const startInline = performance.now();
+        // Benchmark 2: Static Array (Optimized from Legacy Inline)
+        const startArray = performance.now();
         elementsArray.forEach(el => {
-            el.style.opacity = 0;
-            el.style.transform = 'translateY(20px)';
-            el.style.transition = 'opacity 0.5s, transform 0.5s';
-        }
-        const endInline = performance.now();
-        const timeInline = endInline - startInline;
-        console.log(`Legacy Inline Style Time: ${timeInline.toFixed(2)}ms`);
+            el.classList.add('test-class');
+        });
+        const endArray = performance.now();
+        const timeArray = endArray - startArray;
+        console.log(`Static Array Time: ${timeArray.toFixed(2)}ms`);
 
         // Display results
         const results = document.createElement('div');
         results.innerHTML = `
             <h2>Results (${count} elements)</h2>
-            <p>Optimized Class: ${timeClass.toFixed(2)}ms</p>
-            <p>Legacy Inline Style: ${timeInline.toFixed(2)}ms</p>
-            <p>Improvement: ${((timeInline - timeClass) / timeInline * 100).toFixed(2)}%</p>
+            <p><strong>Baseline:</strong> Live Collection: ${timeLive.toFixed(2)}ms</p>
+            <p><strong>Optimized:</strong> Static Array: ${timeArray.toFixed(2)}ms</p>
+            <p>Improvement (Array vs Live): ${((timeLive - timeArray) / timeLive * 100).toFixed(2)}%</p>
+            <hr>
+            <p><small>Note: Legacy Inline Styles were replaced by the Static Array approach for comparison.</small></p>
         `;
         document.body.insertBefore(results, container);
     </script>
