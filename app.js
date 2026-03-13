@@ -5,7 +5,7 @@ const products = [
         name: 'Brainrot',
         price: 19.99,
         image: 'assets/brainrot.svg',
-        category: 'crazy',
+        category: 'T-Shirts',
         tags: ['crazy', 'design'],
     },
     {
@@ -13,7 +13,7 @@ const products = [
         name: 'Couple Goals',
         price: 29.99,
         image: 'assets/couple goals.svg',
-        category: 'couplegoals',
+        category: 'T-Shirts',
         tags: ['couplegoals'],
     },
     {
@@ -21,7 +21,7 @@ const products = [
         name: 'Intellactual',
         price: 24.99,
         image: 'assets/intellactual.svg',
-        category: 'intellectual',
+        category: 'T-Shirts',
         tags: ['intellectual', 'design'],
     },
     {
@@ -29,7 +29,7 @@ const products = [
         name: 'Mug',
         price: 14.99,
         image: 'assets/mug.svg',
-        category: 'nerdy',
+        category: 'Mugs',
         tags: ['nerdy', 'design'],
     },
     {
@@ -37,7 +37,7 @@ const products = [
         name: 'Nerdy',
         price: 22.99,
         image: 'assets/nerdy.svg',
-        category: 'nerdy',
+        category: 'T-Shirts',
         tags: ['nerdy', 'design'],
     },
     {
@@ -45,7 +45,7 @@ const products = [
         name: 'Robo',
         price: 27.99,
         image: 'assets/robo.svg',
-        category: 'nerdy',
+        category: 'T-Shirts',
         tags: ['nerdy', 'design'],
     },
     {
@@ -53,14 +53,63 @@ const products = [
         name: 'T Sherting',
         price: 19.99,
         image: 'assets/t sherting.svg',
-        category: 'intellectual',
+        category: 'T-Shirts',
         tags: ['intellectual', 'design'],
+    },
+    {
+        id: 8,
+        name: 'Cute Cover',
+        price: 39.99,
+        image: 'assets/covers/cute.svg',
+        category: 'Phone Covers',
+        tags: ['cute', 'design'],
+    },
+    {
+        id: 9,
+        name: 'Pair A Cover',
+        price: 45.99,
+        image: 'assets/covers/pair A.svg',
+        category: 'Phone Covers',
+        tags: ['couplegoals', 'design'],
+    },
+    {
+        id: 10,
+        name: 'Totem Cover',
+        price: 42.99,
+        image: 'assets/covers/totem.svg',
+        category: 'Phone Covers',
+        tags: ['spiritual', 'design'],
+    },
+    {
+        id: 11,
+        name: 'Cute iPad Cover',
+        price: 59.99,
+        image: 'assets/covers/cute.svg',
+        category: 'iPad Covers',
+        tags: ['cute', 'design'],
+    },
+    {
+        id: 12,
+        name: 'Pair A iPad Cover',
+        price: 65.99,
+        image: 'assets/covers/pair A.svg',
+        category: 'iPad Covers',
+        tags: ['couplegoals', 'design'],
+    },
+    {
+        id: 13,
+        name: 'Totem iPad Cover',
+        price: 62.99,
+        image: 'assets/covers/totem.svg',
+        category: 'iPad Covers',
+        tags: ['spiritual', 'design'],
     },
 ];
 
 document.addEventListener('DOMContentLoaded', () => {
     const productsGrid = document.getElementById('productsGrid');
     const filterTags = document.querySelectorAll('.filter-tag');
+    const categoryFilters = document.querySelectorAll('.category-filter');
     const wishlistBadge = document.getElementById('wishlistBadge');
     const cartBadge = document.getElementById('cartBadge');
     const cartBtn = document.getElementById('cartBtn');
@@ -74,22 +123,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let wishlist = [];
     let cart = [];
+    let activeCategory = 'all';
+    let activeTag = 'all';
 
-    function renderProducts(filter = 'all') {
+    function renderProducts() {
         productsGrid.innerHTML = '';
         const filteredProducts = products.filter(product => {
-            if (filter === 'all') return true;
-            return product.tags.includes(filter);
+            const categoryMatch = activeCategory === 'all' || product.category === activeCategory;
+            const tagMatch = activeTag === 'all' || product.tags.includes(activeTag);
+            return categoryMatch && tagMatch;
         });
 
         filteredProducts.forEach(product => {
             const productCard = `
-                <div class="product-card" data-id="${product.id}">
+                <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <div class="product-image-wrapper">
                         <img src="${product.image}" alt="${product.name}" class="product-image">
-                        <div class="product-overlay">
-                            <button class="overlay-icon" data-action="open-modal">View</button>
-                        </div>
                     </div>
                     <div class="product-info">
                         <h3 class="product-name">${product.name}</h3>
@@ -127,9 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.target.closest('.wishlist-btn')) {
             toggleWishlist(productId, e.target.closest('.wishlist-btn'));
-        }
-
-        if (e.target.dataset.action === 'open-modal') {
+        } else if (productCard.dataset.action === 'open-modal') {
             openProductModal(productId);
         }
     });
@@ -149,6 +196,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openProductModal(productId) {
         const product = products.find(p => p.id === productId);
+        const isCover = product.category === 'Phone Covers' || product.category === 'iPad Covers';
+        
+        const selectorHtml = isCover ? `
+            <div class="device-selector">
+                <label>Device Model</label>
+                <div class="device-options">
+                    ${product.category === 'Phone Covers' ? 
+                        '<button class="device-btn active">iPhone 13</button><button class="device-btn">iPhone 14</button><button class="device-btn">iPhone 15</button>' : 
+                        '<button class="device-btn active">iPad Pro 11</button><button class="device-btn">iPad Air</button><button class="device-btn">iPad Mini</button>'}
+                </div>
+            </div>
+        ` : `
+            <div class="size-selector">
+                <label>Size</label>
+                <div class="size-options">
+                    <button class="size-btn active">S</button>
+                    <button class="size-btn">M</button>
+                    <button class="size-btn">L</button>
+                    <button class="size-btn">XL</button>
+                </div>
+            </div>
+        `;
+
         productModal.innerHTML = `
             <div class="modal-content">
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
@@ -158,15 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="modal-details">
                             <h2>${product.name}</h2>
                             <p class="product-price">$${product.price}</p>
-                            <div class="size-selector">
-                                <label>Size</label>
-                                <div class="size-options">
-                                    <button class="size-btn active">S</button>
-                                    <button class="size-btn">M</button>
-                                    <button class="size-btn">L</button>
-                                    <button class="size-btn">XL</button>
-                                </div>
-                            </div>
+                            ${selectorHtml}
                             <div class="quantity-selector">
                                 <label>Quantity</label>
                                 <div class="quantity-controls">
@@ -187,12 +249,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeProductModal() {
         productModal.classList.remove('open');
     }
-    
+
     productModal.addEventListener('click', e => {
         if (e.target.dataset.action === 'close-modal') {
             closeProductModal();
-        } else if (e.target.classList.contains('size-btn')) {
-            document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+        } else if (e.target.classList.contains('size-btn') || e.target.classList.contains('device-btn')) {
+            document.querySelectorAll('.size-btn, .device-btn').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
         } else if (e.target.dataset.action === 'decrease-qty') {
             const qtyDisplay = document.querySelector('.qty-display');
@@ -205,24 +267,25 @@ document.addEventListener('DOMContentLoaded', () => {
             qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
         } else if (e.target.classList.contains('add-to-cart-btn')) {
             const productId = parseInt(e.target.dataset.id);
-            const size = document.querySelector('.size-btn.active').textContent;
+            const selector = document.querySelector('.size-btn.active') || document.querySelector('.device-btn.active');
+            const selection = selector ? selector.textContent : 'N/A';
             const quantity = parseInt(document.querySelector('.qty-display').textContent);
-            addToCart(productId, size, quantity);
+            addToCart(productId, selection, quantity);
             closeProductModal();
         }
     });
 
-    function addToCart(productId, size, quantity) {
-        const existingItem = cart.find(item => item.id === productId && item.size === size);
+    function addToCart(productId, selection, quantity) {
+        const existingItem = cart.find(item => item.id === productId && item.selection === selection);
         if (existingItem) {
             existingItem.quantity += quantity;
         } else {
-            cart.push({ id: productId, size, quantity });
+            cart.push({ id: productId, selection, quantity });
         }
         updateCartBadge();
         renderCart();
     }
-    
+
     function renderCart() {
         cartSidebar.innerHTML = '';
         if (cart.length === 0) {
@@ -239,11 +302,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const cartItemsHTML = cart.map(item => {
                 const product = products.find(p => p.id === item.id);
                 return `
-                    <div class="cart-item" data-id="${item.id}" data-size="${item.size}">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
                         <img src="${product.image}" alt="${product.name}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-size">Size: ${item.size}</p>
+                            <p class="cart-item-size">${item.selection}</p>
                             <p class="cart-item-price">$${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
@@ -255,12 +318,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 `;
             }).join('');
-            
+
             const total = cart.reduce((acc, item) => {
                 const product = products.find(p => p.id === item.id);
                 return acc + (product.price * item.quantity);
             }, 0);
-            
+
             cartSidebar.innerHTML = `
                 <div class="sidebar-header">
                     <h3>Your Cart</h3>
@@ -277,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
     }
-    
+
     function renderWishlist() {
         wishlistSidebar.innerHTML = '';
         if (wishlist.length === 0) {
@@ -319,17 +382,17 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
     }
-    
+
     cartBtn.addEventListener('click', () => {
         cartSidebar.classList.add('open');
         sidebarOverlay.classList.add('active');
     });
-    
+
     wishlistBtn.addEventListener('click', () => {
         wishlistSidebar.classList.add('open');
         sidebarOverlay.classList.add('active');
     });
-    
+
     cartSidebar.addEventListener('click', e => {
         if (e.target.dataset.action === 'close-cart') {
             cartSidebar.classList.remove('open');
@@ -337,15 +400,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.target.dataset.action === 'remove-from-cart') {
             const cartItem = e.target.closest('.cart-item');
             const productId = parseInt(cartItem.dataset.id);
-            const size = cartItem.dataset.size;
-            cart = cart.filter(item => !(item.id === productId && item.size === size));
+            const selection = cartItem.dataset.selection;
+            cart = cart.filter(item => !(item.id === productId && item.selection === selection));
             renderCart();
             updateCartBadge();
         } else if (e.target.dataset.action === 'decrease-cart-qty') {
              const cartItem = e.target.closest('.cart-item');
             const productId = parseInt(cartItem.dataset.id);
-            const size = cartItem.dataset.size;
-            const item = cart.find(item => item.id === productId && item.size === size);
+            const selection = cartItem.dataset.selection;
+            const item = cart.find(item => item.id === productId && item.selection === selection);
             if (item.quantity > 1) {
                 item.quantity--;
                 renderCart();
@@ -354,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.target.dataset.action === 'increase-cart-qty') {
             const cartItem = e.target.closest('.cart-item');
             const productId = parseInt(cartItem.dataset.id);
-            const size = cartItem.dataset.size;
-            const item = cart.find(item => item.id === productId && item.size === size);
+            const selection = cartItem.dataset.selection;
+            const item = cart.find(item => item.id === productId && item.selection === selection);
             item.quantity++;
             renderCart();
             updateCartBadge();
@@ -363,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'checkout.html';
         }
     });
-    
+
     wishlistSidebar.addEventListener('click', e => {
         if (e.target.dataset.action === 'close-wishlist') {
             wishlistSidebar.classList.remove('open');
@@ -371,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (e.target.dataset.action === 'remove-from-wishlist') {
             const cartItem = e.target.closest('.cart-item');
             const productId = parseInt(cartItem.dataset.id);
-            toggleWishlist(productId, document.querySelector(`.product-card[data-id='${productId}'] .wishlist-btn`));
+            toggleWishlist(productId, document.querySelector(`.product-card[data-id="${productId}"] .wishlist-btn`));
         }
     });
 
@@ -398,8 +461,17 @@ document.addEventListener('DOMContentLoaded', () => {
         tag.addEventListener('click', () => {
             filterTags.forEach(t => t.classList.remove('active'));
             tag.classList.add('active');
-            const filter = tag.dataset.filter;
-            renderProducts(filter);
+            activeTag = tag.dataset.filter;
+            renderProducts();
+        });
+    });
+
+    categoryFilters.forEach(filter => {
+        filter.addEventListener('click', () => {
+            categoryFilters.forEach(f => f.classList.remove('active'));
+            filter.classList.add('active');
+            activeCategory = filter.dataset.category;
+            renderProducts();
         });
     });
 
