@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="product-info">
                         <h3 class="product-name">${product.name}</h3>
                         <div class="product-meta">
-                            <span class="product-price">$${product.price}</span>
+                            <span class="product-price">₹${product.price}</span>
                             <span class="product-status">In Stock</span>
                         </div>
                     </div>
@@ -197,27 +197,66 @@ document.addEventListener('DOMContentLoaded', () => {
     function openProductModal(productId) {
         const product = products.find(p => p.id === productId);
         const isCover = product.category === 'Phone Covers' || product.category === 'iPad Covers';
+        const isMug = product.category === 'Mugs';
         
-        const selectorHtml = isCover ? `
-            <div class="device-selector">
-                <label>Device Model</label>
-                <div class="device-options">
-                    ${product.category === 'Phone Covers' ? 
-                        '<button class="device-btn active">iPhone 13</button><button class="device-btn">iPhone 14</button><button class="device-btn">iPhone 15</button>' : 
-                        '<button class="device-btn active">iPad Pro 11</button><button class="device-btn">iPad Air</button><button class="device-btn">iPad Mini</button>'}
+        let selectorHtml = '';
+        if (isCover) {
+            selectorHtml = `
+                <div class="device-selector">
+                    <label for="device-select">Device Model</label>
+                    <div class="device-options">
+                        <input list="device-models" id="device-select" name="device-select" class="dropdown-select" placeholder="Type or select model..." />
+                        <datalist id="device-models">
+                            ${product.category === 'Phone Covers' ?
+                                `<option value="iPhone 13">
+                                <option value="iPhone 13 Pro">
+                                <option value="iPhone 13 Pro Max">
+                                <option value="iPhone 14">
+                                <option value="iPhone 14 Pro">
+                                <option value="iPhone 14 Pro Max">
+                                <option value="iPhone 15">
+                                <option value="iPhone 15 Pro">
+                                <option value="iPhone 15 Pro Max">
+                                <option value="iPhone 16">
+                                <option value="iPhone 16 Pro">
+                                <option value="iPhone 16 Pro Max">
+                                <option value="Samsung Galaxy S23">
+                                <option value="Samsung Galaxy S23+">
+                                <option value="Samsung Galaxy S23 Ultra">
+                                <option value="Samsung Galaxy S24">
+                                <option value="Samsung Galaxy S24+">
+                                <option value="Samsung Galaxy S24 Ultra">
+                                <option value="Google Pixel 8">
+                                <option value="Google Pixel 8 Pro">
+                                <option value="Google Pixel 9">
+                                <option value="Google Pixel 9 Pro">` :
+                                `<option value="iPad Pro 11">
+                                <option value="iPad Pro 12.9">
+                                <option value="iPad Air">
+                                <option value="iPad Mini">
+                                <option value="iPad 10th Gen">
+                                <option value="iPad 9th Gen">`
+                            }
+                        </datalist>
+                    </div>
                 </div>
-            </div>
-        ` : `
-            <div class="size-selector">
-                <label>Size</label>
-                <div class="size-options">
-                    <button class="size-btn active">S</button>
-                    <button class="size-btn">M</button>
-                    <button class="size-btn">L</button>
-                    <button class="size-btn">XL</button>
+            `;
+        } else if (!isMug) {
+            selectorHtml = `
+                <div class="size-selector">
+                    <label for="size-select">Size</label>
+                    <div class="size-options">
+                        <select id="size-select" class="dropdown-select">
+                            <option value="S">S</option>
+                            <option value="M" selected>M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
+        }
 
         productModal.innerHTML = `
             <div class="modal-content">
@@ -227,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <img src="${product.image}" alt="${product.name}" class="modal-image">
                         <div class="modal-details">
                             <h2>${product.name}</h2>
-                            <p class="product-price">$${product.price}</p>
+                            <p class="product-price">₹${product.price}</p>
                             ${selectorHtml}
                             <div class="quantity-selector">
                                 <label>Quantity</label>
@@ -251,11 +290,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     productModal.addEventListener('click', e => {
-        if (e.target.dataset.action === 'close-modal') {
+        if (e.target.classList.contains('modal-image')) {
+            e.target.classList.toggle('full-view');
+        } else if (e.target.dataset.action === 'close-modal') {
+            const modalImage = document.querySelector('.modal-image');
+            if (modalImage && modalImage.classList.contains('full-view')) {
+                modalImage.classList.remove('full-view');
+            }
             closeProductModal();
-        } else if (e.target.classList.contains('size-btn') || e.target.classList.contains('device-btn')) {
-            document.querySelectorAll('.size-btn, .device-btn').forEach(btn => btn.classList.remove('active'));
-            e.target.classList.add('active');
         } else if (e.target.dataset.action === 'decrease-qty') {
             const qtyDisplay = document.querySelector('.qty-display');
             let qty = parseInt(qtyDisplay.textContent);
@@ -267,8 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
             qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
         } else if (e.target.classList.contains('add-to-cart-btn')) {
             const productId = parseInt(e.target.dataset.id);
-            const selector = document.querySelector('.size-btn.active') || document.querySelector('.device-btn.active');
-            const selection = selector ? selector.textContent : 'N/A';
+            const sizeSelect = document.getElementById('size-select');
+            const deviceSelect = document.getElementById('device-select');
+            let selection = 'N/A';
+
+            if (sizeSelect) {
+                selection = sizeSelect.value;
+            } else if (deviceSelect) {
+                selection = deviceSelect.value || 'N/A';
+            }
+
             const quantity = parseInt(document.querySelector('.qty-display').textContent);
             addToCart(productId, selection, quantity);
             closeProductModal();
@@ -307,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="cart-item-details">
                             <p class="cart-item-name">${product.name}</p>
                             <p class="cart-item-size">${item.selection}</p>
-                            <p class="cart-item-price">$${product.price}</p>
+                            <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
                                 <span class="qty-display">${item.quantity}</span>
@@ -333,7 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="sidebar-footer">
                     <div class="cart-total">
                         <span>Total</span>
-                        <span>$${total.toFixed(2)}</span>
+                        <span>₹${total.toFixed(2)}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
                 </div>
@@ -364,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <img src="${product.image}" alt="${product.name}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-price">$${product.price}</p>
+                            <p class="cart-item-price">₹${product.price}</p>
                              <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
                         </div>
                     </div>
@@ -475,7 +525,81 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    function renderCouples() {
+        const couplesGrid = document.getElementById('couplesGrid');
+        if (!couplesGrid) return;
+
+        couplesGrid.innerHTML = '';
+
+        // Find all products with the 'couplegoals' tag
+        const coupleProducts = products.filter(p => p.tags.includes('couplegoals'));
+
+        // Ensure we have an even number for pairing
+        const pairs = [];
+        for (let i = 0; i < coupleProducts.length; i += 2) {
+            if (i + 1 < coupleProducts.length) {
+                pairs.push([coupleProducts[i], coupleProducts[i + 1]]);
+            }
+        }
+
+        // If we have an odd number, pair the last one with the first one
+        if (coupleProducts.length % 2 !== 0 && coupleProducts.length > 1) {
+            pairs.push([coupleProducts[coupleProducts.length - 1], coupleProducts[0]]);
+        }
+
+        pairs.forEach(pair => {
+            const [item1, item2] = pair;
+            const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+
+            const coupleCard = `
+                <div class="couple-card">
+                    <div class="couple-products">
+                        <img src="${item1.image}" alt="${item1.name}" class="couple-product-img">
+                        <img src="${item2.image}" alt="${item2.name}" class="couple-product-img">
+                    </div>
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem">${item1.name} + ${item2.name}</h3>
+                        <p style="color: #888; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center">
+                            <div>
+                                <span style="text-decoration: line-through; color: #666; font-size: 0.9rem">₹${(item1.price + item2.price).toFixed(2)}</span>
+                                <span style="color: #3b82f6; font-weight: 700; font-size: 1.2rem; margin-left: 0.5rem">₹${bundlePrice.toFixed(2)}</span>
+                            </div>
+                            <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            couplesGrid.insertAdjacentHTML('beforeend', coupleCard);
+        });
+
+        couplesGrid.addEventListener('click', e => {
+            if (e.target.classList.contains('bundle-btn')) {
+                const id1 = parseInt(e.target.dataset.id1);
+                const id2 = parseInt(e.target.dataset.id2);
+
+                // Add both to cart with default sizes if applicable
+                const product1 = products.find(p => p.id === id1);
+                const product2 = products.find(p => p.id === id2);
+
+                const getSelection = (product) => {
+                    if (product.category === 'Phone Covers') return 'iPhone 15';
+                    if (product.category === 'iPad Covers') return 'iPad Pro 11';
+                    if (product.category !== 'Mugs') return 'M';
+                    return 'N/A';
+                };
+
+                addToCart(id1, getSelection(product1), 1);
+                addToCart(id2, getSelection(product2), 1);
+
+                cartSidebar.classList.add('open');
+                sidebarOverlay.classList.add('active');
+            }
+        });
+    }
+
     renderProducts();
     renderCart();
     renderWishlist();
+    renderCouples();
 });

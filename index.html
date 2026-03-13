@@ -878,6 +878,21 @@
             aspect-ratio: 1 / 1;
             border-radius: 12px;
             object-fit: cover;
+            cursor: zoom-in;
+            transition: all 0.3s ease;
+        }
+
+        .modal-image.full-view {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            z-index: 4000;
+            background: rgba(0, 0, 0, 0.95);
+            object-fit: contain;
+            cursor: zoom-out;
+            padding: 2rem;
         }
 
         .modal-details h2 {
