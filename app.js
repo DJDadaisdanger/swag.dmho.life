@@ -118,6 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const wishlistSidebar = document.getElementById('wishlistSidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const productModal = document.getElementById('productModal');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const navLinks = document.getElementById('navLinks');
 
     let wishlist = [];
     let cart = [];
@@ -333,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>Total</span>
                         <span>$${total.toFixed(2)}</span>
                     </div>
-                    <button class="checkout-btn">Checkout</button>
+                    <button class="checkout-btn" data-action="checkout">Checkout</button>
                 </div>
             `;
         }
@@ -420,6 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
             item.quantity++;
             renderCart();
             updateCartBadge();
+        } else if (e.target.dataset.action === 'checkout') {
+            window.location.href = 'checkout.html';
         }
     });
 
@@ -439,6 +443,19 @@ document.addEventListener('DOMContentLoaded', () => {
         wishlistSidebar.classList.remove('open');
         sidebarOverlay.classList.remove('active');
     });
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // Close mobile menu when a nav link is clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+            });
+        });
+    }
 
     filterTags.forEach(tag => {
         tag.addEventListener('click', () => {
