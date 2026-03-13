@@ -94,6 +94,19 @@
         .icon-btn:hover {
             color: #3b82f6;
         }
+
+        .icon-btn:active,
+        .filter-tag:active,
+        .wishlist-btn:active,
+        .qty-btn:active,
+        .size-btn:active,
+        .add-to-cart-btn:active,
+        .checkout-btn:active,
+        .remove-btn:active,
+        .bundle-btn:active,
+        .contact-link:active {
+            transform: scale(0.95);
+        }
         
         .badge {
             position: absolute;
@@ -344,8 +357,8 @@
         }
 
         .overlay-icon {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             display: flex;
@@ -402,8 +415,8 @@
             backdrop-filter: blur(4px);
             border: none;
             color: #fff;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -713,8 +726,8 @@
             background: #1a1a1a;
             border: 1px solid #2a2a2a;
             color: #eeeeee;
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border-radius: 4px;
             cursor: pointer;
             display: flex;
@@ -742,7 +755,8 @@
             text-decoration: underline;
             padding: 0.25rem 0.5rem;
             transition: opacity 0.2s;
-            min-height: 32px;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .remove-btn:hover {
@@ -844,6 +858,15 @@
         }
 
         @media (max-width: 768px) {
+            .modal {
+                align-items: flex-end;
+                padding: 0;
+            }
+            .modal-content {
+                border-radius: 24px 24px 0 0;
+                width: 100%;
+                max-height: 85vh;
+            }
             .modal-product {
                 grid-template-columns: 1fr;
             }
@@ -1127,8 +1150,8 @@
                     <textarea id="designDesc" placeholder="Describe your vision here..." rows="5" required="" data-testid="design-description"></textarea>
                     
                     <div class="form-row">
-                        <input type="text" id="designName" placeholder="Your Name" required="" data-testid="design-name">
-                        <input type="email" id="designEmail" placeholder="Your Email" required="" data-testid="design-email">
+                        <input type="text" id="designName" placeholder="Your Name" inputmode="text" required="" data-testid="design-name">
+                        <input type="email" id="designEmail" placeholder="Your Email" inputmode="email" required="" data-testid="design-email">
                     </div>
                     
                     <button type="submit" class="cta-btn" data-testid="start-consultation-btn">
