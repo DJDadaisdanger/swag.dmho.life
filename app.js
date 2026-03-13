@@ -64,8 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const wishlistBadge = document.getElementById('wishlistBadge');
     const cartBadge = document.getElementById('cartBadge');
     const cartBtn = document.getElementById('cartBtn');
+    const wishlistBtn = document.getElementById('wishlistBtn');
     const cartSidebar = document.getElementById('cartSidebar');
-    const cartOverlay = document.getElementById('cartOverlay');
+    const wishlistSidebar = document.getElementById('wishlistSidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
     const productModal = document.getElementById('productModal');
 
     let wishlist = [];
@@ -140,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('active');
         }
         updateWishlistBadge();
+        renderWishlist();
     }
 
     function openProductModal(productId) {
@@ -222,11 +225,11 @@ document.addEventListener('DOMContentLoaded', () => {
         cartSidebar.innerHTML = '';
         if (cart.length === 0) {
             cartSidebar.innerHTML = `
-                <div class="cart-header">
+                <div class="sidebar-header">
                     <h3>Your Cart</h3>
                     <button class="close-btn" data-action="close-cart">&times;</button>
                 </div>
-                <div class="cart-empty">
+                <div class="sidebar-empty">
                     <p>Your cart is empty</p>
                 </div>
             `;
@@ -257,12 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 0);
             
             cartSidebar.innerHTML = `
-                <div class="cart-header">
+                <div class="sidebar-header">
                     <h3>Your Cart</h3>
                     <button class="close-btn" data-action="close-cart">&times;</button>
                 </div>
-                <div class="cart-items">${cartItemsHTML}</div>
-                <div class="cart-footer">
+                <div class="sidebar-items">${cartItemsHTML}</div>
+                <div class="sidebar-footer">
                     <div class="cart-total">
                         <span>Total</span>
                         <span>$${total.toFixed(2)}</span>
@@ -273,15 +276,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function renderWishlist() {
+        wishlistSidebar.innerHTML = '';
+        if (wishlist.length === 0) {
+            wishlistSidebar.innerHTML = `
+                <div class="sidebar-header">
+                    <h3>Your Wishlist</h3>
+                    <button class="close-btn" data-action="close-wishlist">&times;</button>
+                </div>
+                <div class="sidebar-empty">
+                    <p>Your wishlist is empty</p>
+                </div>
+                 <div class="sidebar-footer">
+                    <button class="checkout-btn">Sign in to save</button>
+                </div>
+            `;
+        } else {
+            const wishlistItemsHTML = wishlist.map(productId => {
+                const product = products.find(p => p.id === productId);
+                return `
+                    <div class="cart-item" data-id="${product.id}">
+                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                        <div class="cart-item-details">
+                            <p class="cart-item-name">${product.name}</p>
+                            <p class="cart-item-price">$${product.price}</p>
+                             <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+             wishlistSidebar.innerHTML = `
+                <div class="sidebar-header">
+                    <h3>Your Wishlist</h3>
+                    <button class="close-btn" data-action="close-wishlist">&times;</button>
+                </div>
+                <div class="sidebar-items">${wishlistItemsHTML}</div>
+                <div class="sidebar-footer">
+                    <button class="checkout-btn">Sign in to save</button>
+                </div>
+            `;
+        }
+    }
+    
     cartBtn.addEventListener('click', () => {
         cartSidebar.classList.add('open');
-        cartOverlay.classList.add('active');
+        sidebarOverlay.classList.add('active');
+    });
+    
+    wishlistBtn.addEventListener('click', () => {
+        wishlistSidebar.classList.add('open');
+        sidebarOverlay.classList.add('active');
     });
     
     cartSidebar.addEventListener('click', e => {
         if (e.target.dataset.action === 'close-cart') {
             cartSidebar.classList.remove('open');
-            cartOverlay.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
         } else if (e.target.dataset.action === 'remove-from-cart') {
             const cartItem = e.target.closest('.cart-item');
             const productId = parseInt(cartItem.dataset.id);
@@ -309,10 +359,22 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCartBadge();
         }
     });
+    
+    wishlistSidebar.addEventListener('click', e => {
+        if (e.target.dataset.action === 'close-wishlist') {
+            wishlistSidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('active');
+        } else if (e.target.dataset.action === 'remove-from-wishlist') {
+            const cartItem = e.target.closest('.cart-item');
+            const productId = parseInt(cartItem.dataset.id);
+            toggleWishlist(productId, document.querySelector(`.product-card[data-id='${productId}'] .wishlist-btn`));
+        }
+    });
 
-    cartOverlay.addEventListener('click', () => {
+    sidebarOverlay.addEventListener('click', () => {
         cartSidebar.classList.remove('open');
-        cartOverlay.classList.remove('active');
+        wishlistSidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('active');
     });
 
     filterTags.forEach(tag => {
@@ -326,4 +388,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderProducts();
     renderCart();
+    renderWishlist();
 });
