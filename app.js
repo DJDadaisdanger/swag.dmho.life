@@ -216,8 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
                             <span class="product-status">In Stock</span>
                         </div>
                     </div>
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}">
+                        <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                     </button>
@@ -406,27 +406,53 @@ document.addEventListener("DOMContentLoaded", () => {
       addToCart(productId, selection, quantity);
       closeProductModal();
     }
-  });
 
-  function addToCart(productId, selection, quantity) {
-    const action = () => {
-      const existingItem = cart.find(
-        (item) => item.id === productId && item.selection === selection,
-      );
-      if (existingItem) {
-        existingItem.quantity += quantity;
-      } else {
-        cart.push({ id: productId, selection, quantity });
-      }
-      saveState();
-      updateCartBadge();
-      renderCart();
-    };
+    productModal.addEventListener('click', e => {
+        if (e.target.classList.contains('modal-image')) {
+            e.target.classList.toggle('full-view');
+        } else if (e.target.dataset.action === 'close-modal') {
+            const modalImage = document.querySelector('.modal-image');
+            if (modalImage && modalImage.classList.contains('full-view')) {
+                modalImage.classList.remove('full-view');
+            }
+            closeProductModal();
+        } else if (e.target.dataset.action === 'decrease-qty') {
+            const qtyDisplay = document.querySelector('.qty-display');
+            let qty = parseInt(qtyDisplay.textContent);
+            if (qty > 1) {
+                qtyDisplay.textContent = qty - 1;
+            }
+        } else if (e.target.dataset.action === 'increase-qty') {
+            const qtyDisplay = document.querySelector('.qty-display');
+            qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
+        } else if (e.target.classList.contains('add-to-cart-btn')) {
+            const productId = parseInt(e.target.dataset.id);
+            const sizeSelect = document.getElementById('size-select');
+            const deviceSelect = document.getElementById('device-select');
+            let selection = 'N/A';
 
-    if (cart.length === 0 && wishlist.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
+            if (sizeSelect) {
+                selection = sizeSelect.value;
+            } else if (deviceSelect) {
+                selection = deviceSelect.value || 'N/A';
+            }
+
+            const quantity = parseInt(document.querySelector('.qty-display').textContent);
+            addToCart(productId, selection, quantity);
+            closeProductModal();
+        }
+    });
+
+    function addToCart(productId, selection, quantity) {
+        const existingItem = cart.find(item => item.id === productId && item.selection === selection);
+        const product = products.find(p => p.id === productId);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            cart.push({ id: productId, name: product.name, price: product.price, selection, quantity });
+        }
+        updateCartBadge();
+        renderCart();
     }
   }
 
@@ -484,6 +510,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
                 </div>
             `;
+
+            const checkoutBtn = cartSidebar.querySelector('.checkout-btn');
+            checkoutBtn.addEventListener('click', () => {
+                localStorage.setItem('cart', JSON.stringify(cart));
+                window.location.href = 'checkout.html';
+            });
+        }
     }
   }
 
@@ -643,10 +676,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     couplesGrid.innerHTML = "";
 
-    // Find all products with the 'couplegoals' tag
-    const coupleProducts = products.filter((p) =>
-      p.tags.includes("couplegoals"),
-    );
+    categoryFilters.forEach(filter => {
+        filter.addEventListener('click', () => {
+            const isAlreadyActive = filter.classList.contains('active');
+            
+            categoryFilters.forEach(f => f.classList.remove('active'));
+
+            if (isAlreadyActive) {
+                activeCategory = 'all';
+            } else {
+                filter.classList.add('active');
+                activeCategory = filter.dataset.category;
+            }
+
+            activeTag = 'all';
+            filterTags.forEach(t => t.classList.remove('active'));
+            const allTag = document.querySelector('.filter-tag[data-filter="all"]');
+            if (allTag) {
+                allTag.classList.add('active');
+            }
+
+            renderProducts();
+        });
+    });
+
+    function renderCouples() {
+        const couplesGrid = document.getElementById('couplesGrid');
+        if (!couplesGrid) return;
+
+        couplesGrid.innerHTML = '';
+
+        // Find all products with the 'couplegoals' tag
+        const coupleProducts = products.filter(p => p.tags.includes('couplegoals'));
 
     // Ensure we have an even number for pairing
     const pairs = [];
