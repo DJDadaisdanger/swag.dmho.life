@@ -406,54 +406,26 @@ document.addEventListener("DOMContentLoaded", () => {
       addToCart(productId, selection, quantity);
       closeProductModal();
     }
+  });
 
-    productModal.addEventListener('click', e => {
-        if (e.target.classList.contains('modal-image')) {
-            e.target.classList.toggle('full-view');
-        } else if (e.target.dataset.action === 'close-modal') {
-            const modalImage = document.querySelector('.modal-image');
-            if (modalImage && modalImage.classList.contains('full-view')) {
-                modalImage.classList.remove('full-view');
-            }
-            closeProductModal();
-        } else if (e.target.dataset.action === 'decrease-qty') {
-            const qtyDisplay = document.querySelector('.qty-display');
-            let qty = parseInt(qtyDisplay.textContent);
-            if (qty > 1) {
-                qtyDisplay.textContent = qty - 1;
-            }
-        } else if (e.target.dataset.action === 'increase-qty') {
-            const qtyDisplay = document.querySelector('.qty-display');
-            qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
-        } else if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = parseInt(e.target.dataset.id);
-            const sizeSelect = document.getElementById('size-select');
-            const deviceSelect = document.getElementById('device-select');
-            let selection = 'N/A';
-
-            if (sizeSelect) {
-                selection = sizeSelect.value;
-            } else if (deviceSelect) {
-                selection = deviceSelect.value || 'N/A';
-            }
-
-            const quantity = parseInt(document.querySelector('.qty-display').textContent);
-            addToCart(productId, selection, quantity);
-            closeProductModal();
-        }
-    });
-
-    function addToCart(productId, selection, quantity) {
-        const existingItem = cart.find(item => item.id === productId && item.selection === selection);
-        const product = products.find(p => p.id === productId);
-        if (existingItem) {
-            existingItem.quantity += quantity;
-        } else {
-            cart.push({ id: productId, name: product.name, price: product.price, selection, quantity });
-        }
-        updateCartBadge();
-        renderCart();
+  function addToCart(productId, selection, quantity) {
+    const existingItem = cart.find(
+      (item) => item.id === productId && item.selection === selection,
+    );
+    const product = products.find((p) => p.id === productId);
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      cart.push({
+        id: productId,
+        name: product.name,
+        price: product.price,
+        selection,
+        quantity,
+      });
     }
+    updateCartBadge();
+    renderCart();
   }
 
   function renderCart() {
@@ -517,7 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.href = 'checkout.html';
             });
         }
-    }
   }
 
   function renderWishlist() {
@@ -670,41 +641,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  categoryFilters.forEach(filter => {
+      filter.addEventListener('click', () => {
+          const isAlreadyActive = filter.classList.contains('active');
+
+          categoryFilters.forEach(f => f.classList.remove('active'));
+
+          if (isAlreadyActive) {
+              activeCategory = 'all';
+          } else {
+              filter.classList.add('active');
+              activeCategory = filter.dataset.category;
+          }
+
+          activeTag = 'all';
+          filterTags.forEach(t => t.classList.remove('active'));
+          const allTag = document.querySelector('.filter-tag[data-filter="all"]');
+          if (allTag) {
+              allTag.classList.add('active');
+          }
+
+          renderProducts();
+      });
+  });
+
   function renderCouples() {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
     couplesGrid.innerHTML = "";
-
-    categoryFilters.forEach(filter => {
-        filter.addEventListener('click', () => {
-            const isAlreadyActive = filter.classList.contains('active');
-            
-            categoryFilters.forEach(f => f.classList.remove('active'));
-
-            if (isAlreadyActive) {
-                activeCategory = 'all';
-            } else {
-                filter.classList.add('active');
-                activeCategory = filter.dataset.category;
-            }
-
-            activeTag = 'all';
-            filterTags.forEach(t => t.classList.remove('active'));
-            const allTag = document.querySelector('.filter-tag[data-filter="all"]');
-            if (allTag) {
-                allTag.classList.add('active');
-            }
-
-            renderProducts();
-        });
-    });
-
-    function renderCouples() {
-        const couplesGrid = document.getElementById('couplesGrid');
-        if (!couplesGrid) return;
-
-        couplesGrid.innerHTML = '';
 
         // Find all products with the 'couplegoals' tag
         const coupleProducts = products.filter(p => p.tags.includes('couplegoals'));
