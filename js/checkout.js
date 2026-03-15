@@ -1,3 +1,17 @@
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, function(match) {
+    const escapeMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return escapeMap[match];
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const orderItems = document.getElementById('order-items');
     const totalPrice = document.getElementById('total-price');
@@ -6,20 +20,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     if (cart.length === 0) {
-        orderItems.innerHTML = '<p>Your cart is empty.</p>';
+        if (orderItems) {
+            orderItems.innerHTML = '<p>Your cart is empty.</p>';
+        }
     } else {
         let total = 0;
         cart.forEach(item => {
             const orderItem = document.createElement('div');
             orderItem.classList.add('order-item');
+            const safeName = escapeHTML(item.name);
+            const safeQuantity = escapeHTML(item.quantity);
             orderItem.innerHTML = `
-                <span>${item.name} x ${item.quantity}</span>
+                <span>${safeName} x ${safeQuantity}</span>
                 <span>$${(item.price * item.quantity).toFixed(2)}</span>
             `;
-            orderItems.appendChild(orderItem);
+            if (orderItems) {
+                orderItems.appendChild(orderItem);
+            }
             total += item.price * item.quantity;
         });
-        totalPrice.textContent = `$${total.toFixed(2)}`;
+        if (totalPrice) {
+            totalPrice.textContent = `$${total.toFixed(2)}`;
+        }
     }
 
     backToShopBtn.addEventListener('click', () => {
