@@ -3,6 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Intellectual Designs for Cool People. Express your personality with our curated collection of minimalist, thought-provoking designs.">
     <title>.studio</title>
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <style>
@@ -19,6 +20,7 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             transition: opacity ease-in 0.2s;
+            overflow-x: hidden;
         }
 
         body[unresolved] {
@@ -471,7 +473,7 @@
 
         .category-card p {
             font-size: 0.95rem;
-            color: #888;
+            color: #b4b4b4;
         }
 
         .couples-grid {
@@ -539,7 +541,7 @@
         }
 
         .creator-card > p {
-            color: #888;
+            color: #b4b4b4;
             margin-bottom: 2rem;
         }
 
@@ -577,6 +579,18 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
 
         @media (max-width: 640px) {
@@ -707,7 +721,7 @@
 
         .cart-item-size {
             font-size: 0.85rem;
-            color: #888;
+            color: #b4b4b4;
             margin-bottom: 0.5rem;
         }
 
@@ -797,7 +811,7 @@
 
         .checkout-btn:disabled {
             background: #2a2a2a;
-            color: #666;
+            color: #a3a3a3;
             cursor: not-allowed;
         }
 
@@ -807,7 +821,7 @@
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            color: #666;
+            color: #b4b4b4;
         }
 
         .modal {
@@ -820,7 +834,7 @@
             padding: 1.5rem;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s;
+            transition: opacity 0.3s, visibility 0.3s;
             z-index: 3000;
         }
 
@@ -867,6 +881,11 @@
                 border-radius: 24px 24px 0 0;
                 width: 100%;
                 max-height: 85vh;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-out;
+            }
+            .modal.open .modal-content {
+                transform: translateY(0);
             }
             .modal-product {
                 grid-template-columns: 1fr;
@@ -999,7 +1018,7 @@
         }
 
         .footer p {
-            color: #666;
+            color: #b4b4b4;
         }
 
         .success-message {
@@ -1031,7 +1050,7 @@
             align-items: center;
             justify-content: center;
             padding: 3rem;
-            color: #666;
+            color: #b4b4b4;
         }
 
         @media (max-width: 768px) {
@@ -1104,6 +1123,9 @@
             </div>
         </nav>
     </header>
+
+    <!-- Main Content -->
+    <main>
 
     <!-- Hero Section -->
     <section class="hero" data-testid="hero-section">
@@ -1205,10 +1227,13 @@
                 <p data-testid="submit-design-subtitle">Have a unique idea? Let's bring it to life together</p>
                 
                 <form id="designForm" data-testid="design-form" class="design-form">
+                    <label for="designDesc" class="sr-only">Design Description</label>
                     <textarea id="designDesc" placeholder="Describe your vision here..." rows="5" required="" data-testid="design-description"></textarea>
                     
                     <div class="form-row">
+                        <label for="designName" class="sr-only">Your Name</label>
                         <input type="text" id="designName" placeholder="Your Name" inputmode="text" required="" data-testid="design-name">
+                        <label for="designEmail" class="sr-only">Your Email</label>
                         <input type="email" id="designEmail" placeholder="Your Email" inputmode="email" required="" data-testid="design-email">
                     </div>
                     
@@ -1249,6 +1274,8 @@
             </div>
         </div>
     </section>
+
+    </main>
 
     <!-- Sidebars -->
     <div class="sidebar" id="cartSidebar" data-testid="cart-sidebar"></div>
