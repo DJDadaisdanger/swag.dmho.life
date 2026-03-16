@@ -3,6 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Intellectual Designs for Cool People. Express your personality with our curated collection of minimalist, thought-provoking designs.">
     <title>.studio</title>
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
     <style>
@@ -19,6 +20,7 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             transition: opacity ease-in 0.2s;
+            overflow-x: hidden;
         }
 
         body[unresolved] {
@@ -471,7 +473,7 @@
 
         .category-card p {
             font-size: 0.95rem;
-            color: #888;
+            color: #b4b4b4;
         }
 
         .couples-grid {
@@ -539,7 +541,7 @@
         }
 
         .creator-card > p {
-            color: #888;
+            color: #b4b4b4;
             margin-bottom: 2rem;
         }
 
@@ -577,6 +579,18 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
 
         @media (max-width: 640px) {
@@ -707,7 +721,7 @@
 
         .cart-item-size {
             font-size: 0.85rem;
-            color: #888;
+            color: #b4b4b4;
             margin-bottom: 0.5rem;
         }
 
@@ -797,7 +811,7 @@
 
         .checkout-btn:disabled {
             background: #2a2a2a;
-            color: #666;
+            color: #a3a3a3;
             cursor: not-allowed;
         }
 
@@ -807,7 +821,7 @@
             flex-direction: column;
             align-items: center;
             gap: 1rem;
-            color: #666;
+            color: #b4b4b4;
         }
 
         .modal {
@@ -820,7 +834,7 @@
             padding: 1.5rem;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.3s;
+            transition: opacity 0.3s, visibility 0.3s;
             z-index: 3000;
         }
 
@@ -867,6 +881,11 @@
                 border-radius: 24px 24px 0 0;
                 width: 100%;
                 max-height: 85vh;
+                transform: translateY(100%);
+                transition: transform 0.3s ease-out;
+            }
+            .modal.open .modal-content {
+                transform: translateY(0);
             }
             .modal-product {
                 grid-template-columns: 1fr;
@@ -999,7 +1018,7 @@
         }
 
         .footer p {
-            color: #666;
+            color: #b4b4b4;
         }
 
         .success-message {
@@ -1031,7 +1050,7 @@
             align-items: center;
             justify-content: center;
             padding: 3rem;
-            color: #666;
+            color: #b4b4b4;
         }
 
         @media (max-width: 768px) {
@@ -1080,21 +1099,21 @@
                     </svg>
                 </button>
                 <button class="icon-btn" data-testid="search-btn" aria-label="Search">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
                 </button>
                 
                 <button class="icon-btn" id="wishlistBtn" data-testid="wishlist-btn" aria-label="Wishlist">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
                     <span class="badge" id="wishlistBadge" data-testid="wishlist-count" style="display: none;">0</span>
                 </button>
                 
                 <button class="icon-btn" id="cartBtn" data-testid="cart-btn" aria-label="Shopping Cart">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="9" cy="21" r="1"></circle>
                         <circle cx="20" cy="21" r="1"></circle>
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -1104,6 +1123,9 @@
             </div>
         </nav>
     </header>
+
+    <!-- Main Content -->
+    <main>
 
     <!-- Hero Section -->
     <section class="hero" data-testid="hero-section">
@@ -1121,12 +1143,48 @@
         <div class="container">
             <h2 class="section-title" data-testid="categories-title">Shop by Category</h2>
             <div class="categories-grid" data-testid="categories-grid">
-                <div class="category-filter" data-category="T-Shirts">T-Shirts</div>
-                <div class="category-filter" data-category="Hoodies">Hoodies</div>
-                <div class="category-filter" data-category="Mugs">Mugs</div>
-                <div class="category-filter" data-category="Wallets">Wallets</div>
-                <div class="category-filter" data-category="iPad Covers">iPad Covers</div>
-                <div class="category-filter" data-category="Phone Covers">Phone Covers</div>
+                <div class="category-card category-filter" data-category="T-Shirts">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                    <h3>T-Shirts</h3>
+                    <p>Starting at $29.99</p>
+                </div>
+                <div class="category-card category-filter" data-category="Hoodies">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                    </svg>
+                    <h3>Hoodies</h3>
+                    <p>Starting at $49.99</p>
+                </div>
+                <div class="category-card category-filter" data-category="Mugs">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 22V8h8v14zM16 10h3a4 4 0 1 1 0 8h-3"/>
+                    </svg>
+                    <h3>Mugs</h3>
+                    <p>Starting at $14.99</p>
+                </div>
+                <div class="category-card category-filter" data-category="Wallets">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="4" y="8" width="16" height="12" rx="2"/>
+                    </svg>
+                    <h3>Wallets</h3>
+                    <p>Starting at $24.99</p>
+                </div>
+                <div class="category-card category-filter" data-category="iPad Covers">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="4" width="12" height="18" rx="2"/>
+                    </svg>
+                    <h3>iPad Covers</h3>
+                    <p>Starting at $34.99</p>
+                </div>
+                <div class="category-card category-filter" data-category="Phone Covers">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="8" y="6" width="8" height="14" rx="2"/>
+                    </svg>
+                    <h3>Phone Covers</h3>
+                    <p>Starting at $19.99</p>
+                </div>
             </div>
         </div>
     </section>
@@ -1169,10 +1227,13 @@
                 <p data-testid="submit-design-subtitle">Have a unique idea? Let's bring it to life together</p>
                 
                 <form id="designForm" data-testid="design-form" class="design-form">
+                    <label for="designDesc" class="sr-only">Design Description</label>
                     <textarea id="designDesc" placeholder="Describe your vision here..." rows="5" required="" data-testid="design-description"></textarea>
                     
                     <div class="form-row">
+                        <label for="designName" class="sr-only">Your Name</label>
                         <input type="text" id="designName" placeholder="Your Name" inputmode="text" required="" data-testid="design-name">
+                        <label for="designEmail" class="sr-only">Your Email</label>
                         <input type="email" id="designEmail" placeholder="Your Email" inputmode="email" required="" data-testid="design-email">
                     </div>
                     
@@ -1182,15 +1243,15 @@
                 </form>
                 
                 <div class="contact-links" id="contact" data-testid="contact-links">
-                    <a href="https://instagram.com/" target="_blank" data-testid="instagram-link" class="contact-link">
+                    <a href="https://instagram.com" target="_blank" data-testid="instagram-link" class="contact-link">
                         <svg width="24" height="24" fill="currentColor">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"></rect>
+                            <rect x="2" y="2" width="25" height="25" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"></rect>
                             <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"></circle>
                             <circle cx="17.5" cy="6.5" r="1.5"></circle>
                         </svg>
                         <span>Chat with Designer</span>
                     </a>
-                    <a href="mailto:designs@plaincool.com" data-testid="email-link" class="contact-link">
+                    <a href="mailto:designs@darkware.com" data-testid="email-link" class="contact-link">
                         <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="5" width="18" height="14" rx="2"></rect>
                             <polyline points="3,7 12,13 21,7"></polyline>
@@ -1214,6 +1275,8 @@
         </div>
     </section>
 
+    </main>
+
     <!-- Sidebars -->
     <div class="sidebar" id="cartSidebar" data-testid="cart-sidebar"></div>
     <div class="sidebar" id="wishlistSidebar" data-testid="wishlist-sidebar"></div>
@@ -1229,6 +1292,6 @@
             <p data-testid="footer-text">© 2026 DJDada. All rights reserved.</p>
         </div>
     </footer>
-    <script src="app.js"></script>
+    <script src="js/app.js" defer></script>
 </body>
 </html>
