@@ -1,103 +1,11 @@
-<!DOCTYPE html>
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Checkout to complete your purchase of our thought-provoking designs.">
-    <title>Checkout</title>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkout - .studio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #0a0a0a;
-            color: #eeeeee;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .checkout-container {
-            background: #121212;
-            padding: 2rem;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 600px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-        }
-
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            text-align: center;
-        }
-
-        .order-summary {
-            margin-bottom: 2rem;
-        }
-
-        .order-summary h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #2a2a2a;
-            padding-bottom: 0.5rem;
-        }
-
-        #order-items {
-            margin-bottom: 1rem;
-        }
-
-        .order-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-        }
-
-        .order-total {
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.2rem;
-            font-weight: 700;
-            padding-top: 1rem;
-            border-top: 1px solid #2a2a2a;
-        }
-
-        #back-to-shop {
-            background: #3b82f6;
-            color: #fff;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-height: 48px;
-        }
-        .checkout-btn:hover {
-            background: #059669;
-        }
-        .checkout-btn:active {
-            transform: scale(0.95);
-        }
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-
-        #back-to-shop:hover {
-            background: #2563eb;
-        }
       * {
         margin: 0;
         padding: 0;
@@ -204,7 +112,7 @@
     </style>
   </head>
   <body>
-    <main class="container">
+    <div class="container">
       <div class="checkout-grid">
         <div class="checkout-form">
           <h2 class="section-title">Shipping & Payment</h2>
@@ -242,170 +150,8 @@
         </div>
         <button id="back-to-shop">Back to Shop</button>
       </div>
-    </main>
-    <script src="js/checkout.js" defer></script>
-</body>
-  </head>
-  <body>
-    <div class="container">
-      <div class="checkout-grid">
-        <div class="checkout-form" style="background: #121212; padding: 2rem; border-radius: 12px; border: 1px solid #2a2a2a;">
-          <h2 class="section-title">Shipping & Payment</h2>
-          <form id="payment-form">
-            <div class="form-group">
-              <label for="name">Full Name</label>
-              <input type="text" id="name" inputmode="text" required style="width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a; color: #eeeeee; padding: 1rem; border-radius: 8px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; min-height: 48px;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#2a2a2a'" />
-            </div>
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" id="email" inputmode="email" required style="width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a; color: #eeeeee; padding: 1rem; border-radius: 8px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; min-height: 48px;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#2a2a2a'" />
-            </div>
-            <div class="form-group">
-              <label for="address">Shipping Address</label>
-              <input type="text" id="address" inputmode="text" required style="width: 100%; background: #1a1a1a; border: 1px solid #2a2a2a; color: #eeeeee; padding: 1rem; border-radius: 8px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; min-height: 48px;" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#2a2a2a'" />
-            </div>
-            <div class="form-group">
-              <label for="card-element"> Credit or debit card </label>
-              <div id="card-element" style="padding: 1rem; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; min-height: 48px; transition: border-color 0.2s;">
-                <!-- A Stripe Element will be inserted here. -->
-              </div>
-              <!-- Used to display form errors. -->
-              <div id="card-errors" role="alert"></div>
-            </div>
-            <button class="checkout-btn">Submit Payment</button>
-          </form>
-        </div>
-        <div class="order-summary" style="background: #121212; padding: 2rem; border-radius: 12px; border: 1px solid #2a2a2a;">
-          <h2 class="section-title">Order Summary</h2>
-          <div id="summary-items"></div>
-          <div class="summary-total">
-            <span>Total</span>
-            <span id="summary-total"></span>
-          </div>
-        </div>
-      </div>
     </div>
-    <script src="https://js.stripe.com/v3/"></script>
-
-    <script src="app.js"></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-
-        function getCookie(name) {
-            const cname = name + "=";
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
-            for(let i = 0; i <ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) == ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(cname) == 0) {
-                    return c.substring(cname.length, c.length);
-                }
-            }
-            return "";
-        }
-        function setCookie(name, value, days = 7) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
-        }
-
-        // Check if user is logged in
-        const isLoggedIn = getCookie("isLoggedIn") === "true";
-
-        if (!isLoggedIn) {
-          // If not logged in, force login to proceed to checkout
-          const modalHtml = `
-                    <div class="modal open" id="forceLoginModal" style="z-index: 5000; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center;">
-                        <div class="modal-content" style="background: #0f0f0f; border-radius: 12px; max-width: 400px; text-align: center; padding: 2rem;">
-                            <h2 style="margin-bottom: 1rem;">Login Required</h2>
-                            <p style="margin-bottom: 2rem; color: #888;">You must sign in to proceed to checkout and payment.</p>
-                            <div style="display: flex; justify-content: center;">
-                                <button id="forceLoginBtn" style="background: #3b82f6; color: #fff; border: none; padding: 0.75rem 2rem; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600;">Sign In</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-          document.body.insertAdjacentHTML("beforeend", modalHtml);
-
-          document
-            .getElementById("forceLoginBtn")
-            .addEventListener("click", () => {
-              setCookie("isLoggedIn", "true");
-              window.location.reload();
-            });
-        }
-
-        // TODO: [Backend Integration] Fetch products, cart, and wishlist from the Python backend
-        // Instead of using localStorage, we should use a session cookie / token obtained via OAuth 2.0.
-        // Example:
-        // fetch('/api/v1/cart', { headers: { 'Authorization': 'Bearer ' + token } })
-        //   .then(res => res.json())
-        //   .then(data => renderCheckout(data.cart));
-
-        const cartCookie = getCookie("cart"); const localCart = cartCookie ? JSON.parse(cartCookie) : [];
-        const summaryItemsContainer = document.getElementById("summary-items");
-        const summaryTotalContainer = document.getElementById("summary-total");
-
-        if (localCart.length === 0) {
-          summaryItemsContainer.innerHTML =
-            '<p style="color: #888;">Your cart is empty.</p>';
-          summaryTotalContainer.textContent = "₹0.00";
-        } else {
-          let total = 0;
-          let html = "";
-
-          localCart.forEach((item) => {
-            // TODO: [Backend Integration] Price, sale, and discount info should be fetched securely from the backend (SQLite).
-            // Example: product = await fetch(`/api/v1/products/${item.id}`);
-            // We shouldn't rely on the frontend products array for pricing to avoid tampering.
-
-            const product = products.find((p) => p.id === item.id);
-            if (product) {
-              const itemTotal = product.price * item.quantity;
-              total += itemTotal;
-
-              html += `
-                            <div class="summary-item">
-                                <div style="display: flex; gap: 1rem; align-items: center;">
-                                    <img src="${product.image}" alt="${product.name}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
-                                    <div>
-                                        <div style="font-weight: 600;">${product.name}</div>
-                                        <div style="font-size: 0.85rem; color: #888;">${item.selection} x ${item.quantity}</div>
-                                    </div>
-                                </div>
-                                <div style="font-weight: 600;">₹${itemTotal.toFixed(2)}</div>
-                            </div>
-                        `;
-            }
-          });
-
-          summaryItemsContainer.innerHTML = html;
-          summaryTotalContainer.textContent = "₹" + total.toFixed(2);
-        }
-
-        // TODO: [Payment Integration] Stripe Integration
-        // 1. Initialize Stripe: const stripe = Stripe('pk_test_YOUR_PUBLIC_KEY');
-        // 2. Fetch a PaymentIntent client secret from your Python backend:
-        //    const response = await fetch('/api/v1/create-payment-intent', { method: 'POST', body: JSON.stringify({ items: localCart }) });
-        //    const { clientSecret } = await response.json();
-        // 3. Set up Stripe Elements:
-        //    const elements = stripe.elements({ clientSecret });
-        //    const paymentElement = elements.create('payment');
-        //    paymentElement.mount('#card-element');
-        // 4. On form submit:
-        //    const { error } = await stripe.confirmPayment({ elements, confirmParams: { return_url: 'https://your-site.com/success' }});
-        // 5. Handle success/error and clear cart.
-
-        const form = document.getElementById("payment-form");
-        form.addEventListener("submit", (e) => {
-          e.preventDefault();
-          alert("Payment integration pending. See TODOs in code.");
-        });
-      });
-    </script>
+    <script src="js/products.js"></script>
+    <script src="js/checkout.js" defer></script>
   </body>
 </html>
