@@ -292,6 +292,7 @@
             transition: all 0.2s;
             min-width: 48px;
             min-height: 48px;
+            flex-shrink: 0;
         }
 
         .filter-tag:hover {
@@ -1062,6 +1063,24 @@
                 font-size: 2rem;
             }
             
+            .categories-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+
+            .category-card {
+                padding: 1rem;
+                gap: 0.5rem;
+            }
+
+            .category-card h3 {
+                font-size: 1rem;
+            }
+
+            .category-card p {
+                font-size: 0.8rem;
+            }
+
             .products-grid {
                 grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
                 gap: 1.5rem;
