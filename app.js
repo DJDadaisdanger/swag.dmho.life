@@ -105,13 +105,27 @@ const products = [
   },
 ];
 
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, function(match) {
+    const escapeMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return escapeMap[match];
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;Secure;SameSite=Strict";
 }
 
 function getCookie(name) {
@@ -243,13 +257,14 @@ function getCookie(name) {
     });
 
     filteredProducts.forEach((product) => {
+      const safeName = escapeHTML(product.name);
       const productCard = `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${product.name}" class="product-image">
+                        <img src="${product.image}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">${product.name}</h3>
+                        <h3 class="product-name">${safeName}</h3>
                         <div class="product-meta">
                             <span class="product-price">₹${product.price}</span>
                             <span class="product-status">In Stock</span>
@@ -378,14 +393,15 @@ function getCookie(name) {
             `;
     }
 
+    const safeName = escapeHTML(product.name);
     productModal.innerHTML = `
             <div class="modal-content">
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${product.name}" class="modal-image">
+                        <img src="${product.image}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
-                            <h2>${product.name}</h2>
+                            <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
                             ${selectorHtml}
                             <div class="quantity-selector">
@@ -487,6 +503,7 @@ function getCookie(name) {
           const product = products.find((p) => p.id === item.id);
           const safeName = escapeHTML(product.name);
           const safeSelection = escapeHTML(item.selection);
+          const safeQuantity = escapeHTML(item.quantity);
           return `
                     <div class="cart-item" data-id="${item.id}" data-selection="${safeSelection}">
                         <img src="${product.image}" alt="${safeName}" class="cart-item-img">
@@ -496,7 +513,7 @@ function getCookie(name) {
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${item.quantity}</span>
+                                <span class="qty-display">${safeQuantity}</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
@@ -547,11 +564,12 @@ function getCookie(name) {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
           const product = products.find((p) => p.id === productId);
+          const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${product.name}</p>
+                            <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                              <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
                         </div>
@@ -708,15 +726,17 @@ function getCookie(name) {
     pairs.forEach((pair) => {
       const [item1, item2] = pair;
       const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+      const safeName1 = escapeHTML(item1.name);
+      const safeName2 = escapeHTML(item2.name);
 
       const coupleCard = `
                 <div class="couple-card">
                     <div class="couple-products">
-                        <img src="${item1.image}" alt="${item1.name}" class="couple-product-img">
-                        <img src="${item2.image}" alt="${item2.name}" class="couple-product-img">
+                        <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                        <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
                     </div>
                     <div>
-                        <h3 style="margin-bottom: 0.5rem">${item1.name} + ${item2.name}</h3>
+                        <h3 style="margin-bottom: 0.5rem">${safeName1} + ${safeName2}</h3>
                         <p style="color: #888; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
                         <div style="display: flex; justify-content: space-between; align-items: center">
                             <div>
