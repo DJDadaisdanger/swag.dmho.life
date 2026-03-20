@@ -125,47 +125,43 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeCategory = "all";
   let activeTag = "all";
   let isLoggedIn = false;
-  let hasSeenLoginPrompt = false;
+  let hasSeenLoginPrompt =
+    localStorage.getItem("hasSeenLoginPrompt") === "true";
 
-  const BackendAPI = {
-    async getUserData() {
-      // TODO: [Backend Integration] Fetch user data (cart/wishlist) from the Python backend / SQLite database.
-      // Use the session token from OAuth for authentication.
-      return {
-        wishlist: JSON.parse(localStorage.getItem("wishlist")) || [],
-        cart: JSON.parse(localStorage.getItem("cart")) || [],
-        isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
-        hasSeenLoginPrompt: localStorage.getItem("hasSeenLoginPrompt") === "true"
-      };
-    },
-
-    async login() {
-      // TODO: [Backend Integration] Implement OAuth 2.0 flow. Redirect to the authorization server
-      // and handle the callback securely to store session tokens instead of local dummy variables.
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("hasSeenLoginPrompt", "true");
-      return true;
-    },
-
-    async syncData(cartData, wishlistData) {
-      // TODO: [Backend Integration] Sync the provided cart and wishlist data with the Python backend / SQLite database.
-      localStorage.setItem("cart", JSON.stringify(cartData));
-      localStorage.setItem("wishlist", JSON.stringify(wishlistData));
-    }
+  // --- Mock Backend API Integration ---
+  // Simulates `/api/auth/status`
+  const mockCheckAuth = async () => {
+    return new Promise(resolve => setTimeout(() => resolve(localStorage.getItem('sessionToken') !== null), 200));
   };
 
-  BackendAPI.getUserData().then(data => {
-    wishlist = data.wishlist;
-    cart = data.cart;
-    isLoggedIn = data.isLoggedIn;
-    hasSeenLoginPrompt = data.hasSeenLoginPrompt;
-    renderProducts();
-    renderCart();
-    renderWishlist();
-    renderCouples();
-    updateCartBadge();
-    updateWishlistBadge();
-  });
+  // Simulates `/api/auth/login` (OAuth 2.0 flow)
+  const mockLogin = async () => {
+    return new Promise(resolve => setTimeout(() => {
+      localStorage.setItem('sessionToken', 'dummy-oauth-token-123');
+      resolve({ success: true, user: { id: 1, name: "Test User" } });
+    }, 500));
+  };
+
+  // Simulates `/api/user/data`
+  const mockFetchUserData = async () => {
+    return new Promise(resolve => setTimeout(() => {
+      // Simulating a DB read by reading from a dummy DB state in localStorage
+      const dbCart = JSON.parse(localStorage.getItem("db_cart")) || [];
+      const dbWishlist = JSON.parse(localStorage.getItem("db_wishlist")) || [];
+      resolve({ cart: dbCart, wishlist: dbWishlist });
+    }, 300));
+  };
+
+  // Simulates `/api/user/sync`
+  const mockSyncUserData = async (cartData, wishlistData) => {
+    return new Promise(resolve => setTimeout(() => {
+      // Simulating a DB write by writing to a dummy DB state in localStorage
+      localStorage.setItem("db_cart", JSON.stringify(cartData));
+      localStorage.setItem("db_wishlist", JSON.stringify(wishlistData));
+      console.log('Synced with backend:', { cart: cartData, wishlist: wishlistData });
+      resolve({ success: true });
+    }, 300));
+  };
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
@@ -213,19 +209,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
       modal.remove();
-      const success = await BackendAPI.login();
-      if (success) {
+      const loginResult = await mockLogin();
+      if (loginResult.success) {
         isLoggedIn = true;
         hasSeenLoginPrompt = true;
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("hasSeenLoginPrompt", "true");
+        await mockSyncUserData(cart, wishlist);
         window.pendingLoginActionsLogin.forEach((action) => action());
-        window.pendingLoginActions = [];
-        window.pendingLoginActionsLogin = [];
       }
+      window.pendingLoginActions = [];
+      window.pendingLoginActionsLogin = [];
     });
   }
 
-  async function saveState() {
-    await BackendAPI.syncData(cart, wishlist);
+  function saveState() {
+    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(error => {
+        console.error('Error syncing state with backend:', error);
+      });
+    }
   }
 
   function renderProducts() {
@@ -778,4 +792,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  async function initApp() {
+    isLoggedIn = await mockCheckAuth();
+
+    if (isLoggedIn) {
+      const userData = await mockFetchUserData();
+      // Prefer DB state if logged in, but merge local changes in a real app
+      cart = userData.cart || [];
+      wishlist = userData.wishlist || [];
+    } else {
+      cart = JSON.parse(localStorage.getItem("cart")) || [];
+      wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    }
+
+    renderProducts();
+    renderCart();
+    renderWishlist();
+    renderCouples();
+    updateCartBadge();
+    updateWishlistBadge();
+  }
+
+  initApp();
 });
