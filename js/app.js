@@ -753,3 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartBadge();
   updateWishlistBadge();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { escapeHTML };
+}
