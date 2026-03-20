@@ -166,6 +166,20 @@ function getCookie(name) {
   let isLoggedIn = getCookie('isLoggedIn') === 'true';
   let hasSeenLoginPrompt = getCookie('hasSeenLoginPrompt') === 'true';
 
+  function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+      const escapeMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escapeMap[match];
+    });
+  }
+
   // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
   // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
   // upon successful login via the Python backend.
