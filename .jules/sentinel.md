@@ -7,3 +7,10 @@
 **Vulnerability:** User-controlled input (device model selection which can be edited directly or through localStorage, specifically `item.selection`, `item.name`, and `item.quantity`) was being directly rendered into HTML using template literals without any HTML escaping in `renderCart()` in `js/app.js` and in the checkout page in `js/checkout.js`.
 **Learning:** Even though the data (like device model) originates from a predefined `<datalist>`, an attacker or malicious script could manually alter `localStorage` values to include XSS payloads (e.g. `<img src=x onerror=alert(1)>`). When `renderCart()` runs, the payload executes.
 **Prevention:** Always HTML-escape any data coming from localStorage or any other client-side storage before rendering it into the DOM, even if the application originally sets that data from a seemingly controlled source.
+# 🛡️ Sentinel Security Log
+
+## [2026-03-17] DOM-based XSS in checkout.js
+
+- **Vulnerability**: DOM-based XSS via `innerHTML` in `js/checkout.js`.
+- **Learning**: Even when escaping input, using `innerHTML` to render user-controlled data is risky and less secure than using `textContent` or manual DOM node construction.
+- **Prevention**: Always prefer `textContent` and `document.createElement` when rendering dynamic content retrieved from `localStorage` or other user-controlled sources.
