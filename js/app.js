@@ -106,6 +106,7 @@ const products = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+  const productMap = new Map(products.map(p => [p.id, p]));
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -127,6 +128,20 @@ document.addEventListener("DOMContentLoaded", () => {
   let isLoggedIn = false;
   let hasSeenLoginPrompt =
     localStorage.getItem("hasSeenLoginPrompt") === "true";
+
+  function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+      const escapeMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escapeMap[match];
+    });
+  }
 
   // --- Mock Backend API Integration ---
   // Simulates `/api/auth/status`
@@ -679,15 +694,6 @@ document.addEventListener("DOMContentLoaded", () => {
       filterTags.forEach((t) => t.classList.remove("active"));
       tag.classList.add("active");
       activeTag = tag.dataset.filter;
-      renderProducts();
-    });
-  });
-
-  categoryFilters.forEach((filter) => {
-    filter.addEventListener("click", () => {
-      categoryFilters.forEach((f) => f.classList.remove("active"));
-      filter.classList.add("active");
-      activeCategory = filter.dataset.category;
       renderProducts();
     });
   });

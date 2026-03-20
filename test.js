@@ -37,8 +37,12 @@ const { chromium } = require('playwright');
 
   await page.waitForTimeout(500);
 
+  // Open cart sidebar
+  await page.locator('#cartBtn').click();
+  await page.waitForTimeout(500);
+
   // Click checkout
-  const checkoutBtn = page.locator('.checkout-btn:visible');
+  const checkoutBtn = page.locator('#cartSidebar .checkout-btn:visible');
   await checkoutBtn.click();
 
   await page.waitForTimeout(1000);
