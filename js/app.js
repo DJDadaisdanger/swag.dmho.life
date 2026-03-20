@@ -189,9 +189,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveState() {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    // Save locally first
     localStorage.setItem("cart", JSON.stringify(cart));
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
+
+    // Sync with backend if logged in
+    if (isLoggedIn) {
+      fetch("/api/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Placeholder for auth token
+          "Authorization": "Bearer " + (localStorage.getItem("authToken") || "dummy-token")
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(err => console.error("Failed to sync state to backend:", err));
+    }
   }
 
   function renderProducts() {
