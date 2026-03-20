@@ -105,20 +105,6 @@ const products = [
   },
 ];
 
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>"']/g, function(match) {
-    const escapeMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return escapeMap[match];
-  });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
@@ -238,11 +224,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveState() {
-    if (isLoggedIn) {
-      mockSyncUserData(cart, wishlist);
+    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    if (localStorage.getItem("isLoggedIn") === "true") {
+      fetch("/api/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(err => console.error("Error syncing state:", err));
     }
     localStorage.setItem("cart", JSON.stringify(cart));
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
+
+    // Sync with backend if logged in
+    if (isLoggedIn) {
+      fetch("/api/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Placeholder for auth token
+          "Authorization": "Bearer " + (localStorage.getItem("authToken") || "dummy-token")
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(err => console.error("Failed to sync state to backend:", err));
+    }
   }
 
   function renderProducts() {
@@ -325,7 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap.get(productId);
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -463,20 +469,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingItem = cart.find(
       (item) => item.id === productId && item.selection === selection,
     );
-    const product = products.find((p) => p.id === productId);
+    const product = productMap.get(productId);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      cart.push({
-        id: productId,
-        name: product.name,
-        price: product.price,
-        selection,
-        quantity,
-      });
+      action();
     }
-    updateCartBadge();
-    renderCart();
   }
 
   function renderCart() {
@@ -494,7 +492,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap.get(item.id);
           const safeName = escapeHTML(product.name);
           const safeSelection = escapeHTML(item.selection);
           return `
@@ -517,7 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap.get(item.id);
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -562,7 +560,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap.get(productId);
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -776,8 +774,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap.get(id1);
+        const product2 = productMap.get(id2);
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
@@ -818,3 +816,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initApp();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { escapeHTML };
+}
