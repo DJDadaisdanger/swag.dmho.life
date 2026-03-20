@@ -105,13 +105,27 @@ const products = [
   },
 ];
 
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, function(match) {
+    const escapeMap = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return escapeMap[match];
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
 
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;Secure;SameSite=Strict";
 }
 
 function getCookie(name) {
@@ -475,6 +489,7 @@ function getCookie(name) {
           const product = products.find((p) => p.id === item.id);
           const safeName = escapeHTML(product.name);
           const safeSelection = escapeHTML(item.selection);
+          const safeQuantity = escapeHTML(item.quantity);
           return `
                     <div class="cart-item" data-id="${item.id}" data-selection="${safeSelection}">
                         <img src="${product.image}" alt="${safeName}" class="cart-item-img">
@@ -484,7 +499,7 @@ function getCookie(name) {
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${item.quantity}</span>
+                                <span class="qty-display">${safeQuantity}</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>

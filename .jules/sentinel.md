@@ -7,3 +7,10 @@
 **Vulnerability:** User-controlled inputs or dynamic variables (e.g., `product.name`, `item1.name`, `item2.name`) retrieved from variables or potentially external data sources were interpolated directly into `innerHTML` strings without being HTML-escaped in the root `app.js`.
 **Learning:** `innerHTML` executes inline scripts and processes HTML tags natively. Injecting unsanitized input into `innerHTML` makes the application highly susceptible to DOM-based Cross-Site Scripting (XSS).
 **Prevention:** Always sanitize and HTML-escape any external or user-influenced data (e.g., via a helper like `escapeHTML`) before interpolating it into DOM elements. For elements consisting strictly of text, use `textContent` rather than `innerHTML` to inherently treat inputs as plain text instead of executable HTML.
+# 🛡️ Sentinel Security Log
+
+## [2026-03-17] DOM-based XSS in checkout.js
+
+- **Vulnerability**: DOM-based XSS via `innerHTML` in `js/checkout.js`.
+- **Learning**: Even when escaping input, using `innerHTML` to render user-controlled data is risky and less secure than using `textContent` or manual DOM node construction.
+- **Prevention**: Always prefer `textContent` and `document.createElement` when rendering dynamic content retrieved from `localStorage` or other user-controlled sources.
