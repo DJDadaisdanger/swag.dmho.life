@@ -423,23 +423,32 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function addToCart(productId, selection, quantity) {
-    const existingItem = cart.find(
-      (item) => item.id === productId && item.selection === selection,
-    );
-    const product = products.find((p) => p.id === productId);
-    if (existingItem) {
-      existingItem.quantity += quantity;
+    const action = () => {
+      const existingItem = cart.find(
+        (item) => item.id === productId && item.selection === selection,
+      );
+      const product = products.find((p) => p.id === productId);
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.push({
+          id: productId,
+          name: product.name,
+          price: product.price,
+          selection,
+          quantity,
+        });
+      }
+      saveState();
+      updateCartBadge();
+      renderCart();
+    };
+
+    if (cart.length === 0 && wishlist.length === 0) {
+      showLoginPrompt(action, action);
     } else {
-      cart.push({
-        id: productId,
-        name: product.name,
-        price: product.price,
-        selection,
-        quantity,
-      });
+      action();
     }
-    updateCartBadge();
-    renderCart();
   }
 
   function renderCart() {
