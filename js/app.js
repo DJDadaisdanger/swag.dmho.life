@@ -120,17 +120,52 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  let wishlist = [];
+  let cart = [];
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  let hasSeenLoginPrompt =
-    localStorage.getItem("hasSeenLoginPrompt") === "true";
+  let isLoggedIn = false;
+  let hasSeenLoginPrompt = false;
 
-  // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
-  // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
-  // upon successful login via the Python backend.
+  const BackendAPI = {
+    async getUserData() {
+      // TODO: [Backend Integration] Fetch user data (cart/wishlist) from the Python backend / SQLite database.
+      // Use the session token from OAuth for authentication.
+      return {
+        wishlist: JSON.parse(localStorage.getItem("wishlist")) || [],
+        cart: JSON.parse(localStorage.getItem("cart")) || [],
+        isLoggedIn: localStorage.getItem("isLoggedIn") === "true",
+        hasSeenLoginPrompt: localStorage.getItem("hasSeenLoginPrompt") === "true"
+      };
+    },
+
+    async login() {
+      // TODO: [Backend Integration] Implement OAuth 2.0 flow. Redirect to the authorization server
+      // and handle the callback securely to store session tokens instead of local dummy variables.
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("hasSeenLoginPrompt", "true");
+      return true;
+    },
+
+    async syncData(cartData, wishlistData) {
+      // TODO: [Backend Integration] Sync the provided cart and wishlist data with the Python backend / SQLite database.
+      localStorage.setItem("cart", JSON.stringify(cartData));
+      localStorage.setItem("wishlist", JSON.stringify(wishlistData));
+    }
+  };
+
+  BackendAPI.getUserData().then(data => {
+    wishlist = data.wishlist;
+    cart = data.cart;
+    isLoggedIn = data.isLoggedIn;
+    hasSeenLoginPrompt = data.hasSeenLoginPrompt;
+    renderProducts();
+    renderCart();
+    renderWishlist();
+    renderCouples();
+    updateCartBadge();
+    updateWishlistBadge();
+  });
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
@@ -176,22 +211,21 @@ document.addEventListener("DOMContentLoaded", () => {
       window.pendingLoginActionsLogin = [];
     });
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       modal.remove();
-      isLoggedIn = true;
-      hasSeenLoginPrompt = true;
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("hasSeenLoginPrompt", "true");
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      const success = await BackendAPI.login();
+      if (success) {
+        isLoggedIn = true;
+        hasSeenLoginPrompt = true;
+        window.pendingLoginActionsLogin.forEach((action) => action());
+        window.pendingLoginActions = [];
+        window.pendingLoginActionsLogin = [];
+      }
     });
   }
 
-  function saveState() {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    localStorage.setItem("cart", JSON.stringify(cart));
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  async function saveState() {
+    await BackendAPI.syncData(cart, wishlist);
   }
 
   function renderProducts() {
@@ -744,12 +778,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  renderProducts();
-  renderCart();
-  renderWishlist();
-  renderCouples();
-  updateCartBadge();
-  updateWishlistBadge();
-  updateCartBadge();
-  updateWishlistBadge();
 });
