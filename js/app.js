@@ -106,6 +106,31 @@ const products = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
+
+function setCookie(name, value, days = 7) {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    const expires = "expires=" + d.toUTCString();
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+}
+
+function getCookie(name) {
+    const cname = name + "=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const ca = decodedCookie.split(';');
+    for(let i = 0; i <ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(cname) == 0) {
+            return c.substring(cname.length, c.length);
+        }
+    }
+    return "";
+}
+
+
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -120,13 +145,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  let wishlist = getCookie('wishlist') ? JSON.parse(getCookie('wishlist')) : [];
+  let cart = getCookie('cart') ? JSON.parse(getCookie('cart')) : [];
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-  let hasSeenLoginPrompt =
-    localStorage.getItem("hasSeenLoginPrompt") === "true";
+  let isLoggedIn = getCookie('isLoggedIn') === 'true';
+  let hasSeenLoginPrompt = getCookie('hasSeenLoginPrompt') === 'true';
+
+  function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+      const escapeMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      };
+      return escapeMap[match];
+    });
+  }
 
   // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
   // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
@@ -155,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
                 <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
                     <h2 style="margin-bottom: 1rem;">Save Your Progress</h2>
-                    <p style="margin-bottom: 2rem; color: #b4b4b4;">You must login to save your wishlist and cart securely.</p>
+                    <p style="margin-bottom: 2rem; color: #888;">You must login to save your wishlist and cart securely.</p>
                     <div style="display: flex; gap: 1rem; justify-content: center;">
                         <button id="nvmBtn" style="background: #1a1a1a; color: #eeeeee; border: 1px solid #2a2a2a; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Nvm</button>
                         <button id="loginBtn" style="background: #3b82f6; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Login</button>
@@ -170,7 +208,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("nvmBtn").addEventListener("click", () => {
       modal.remove();
       hasSeenLoginPrompt = true;
-      localStorage.setItem("hasSeenLoginPrompt", "true");
+      setCookie("hasSeenLoginPrompt", "true");
       window.pendingLoginActions.forEach((action) => action());
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
@@ -180,8 +218,8 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.remove();
       isLoggedIn = true;
       hasSeenLoginPrompt = true;
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("hasSeenLoginPrompt", "true");
+      setCookie("isLoggedIn", "true");
+      setCookie("hasSeenLoginPrompt", "true");
       window.pendingLoginActionsLogin.forEach((action) => action());
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
@@ -190,17 +228,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    if (localStorage.getItem("isLoggedIn") === "true") {
-      fetch("/api/sync", {
-        method: "POST",
+        // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    setCookie("cart", JSON.stringify(cart));
+    setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      fetch('/api/sync', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ cart, wishlist })
-      }).catch(err => console.error("Error syncing state:", err));
+      }).catch(error => {
+        console.error('Error syncing state with backend:', error);
+      });
     }
-    localStorage.setItem("cart", JSON.stringify(cart));
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
   }
 
   function renderProducts() {
@@ -213,20 +256,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     filteredProducts.forEach((product) => {
+      const safeName = escapeHTML(product.name);
       const productCard = `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${product.name}" class="product-image">
+                        <img src="${product.image}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">${product.name}</h3>
+                        <h3 class="product-name">${safeName}</h3>
                         <div class="product-meta">
                             <span class="product-price">₹${product.price}</span>
                             <span class="product-status">In Stock</span>
                         </div>
                     </div>
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? 'active' : ''}" aria-label="Add to Wishlist">
-                        <svg width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                     </button>
@@ -283,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = productMap.get(productId);
+    const product = products.find((p) => p.id === productId);
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -348,22 +392,23 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
     }
 
+    const safeName = escapeHTML(product.name);
     productModal.innerHTML = `
             <div class="modal-content">
-                <button class="modal-close close-btn" data-action="close-modal" aria-label="Close modal">&times;</button>
+                <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${product.name}" class="modal-image">
+                        <img src="${product.image}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
-                            <h2>${product.name}</h2>
+                            <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
                             ${selectorHtml}
                             <div class="quantity-selector">
                                 <label>Quantity</label>
                                 <div class="quantity-controls">
-                                    <button class="qty-btn" data-action="decrease-qty" aria-label="Decrease quantity">-</button>
+                                    <button class="qty-btn" data-action="decrease-qty">-</button>
                                     <span class="qty-display">1</span>
-                                    <button class="qty-btn" data-action="increase-qty" aria-label="Increase quantity">+</button>
+                                    <button class="qty-btn" data-action="increase-qty">+</button>
                                 </div>
                             </div>
                             <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>
@@ -418,23 +463,25 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function addToCart(productId, selection, quantity) {
-    const existingItem = cart.find(
-      (item) => item.id === productId && item.selection === selection,
-    );
-    const product = productMap.get(productId);
-    if (existingItem) {
-      existingItem.quantity += quantity;
+    const action = () => {
+      const existingItem = cart.find(
+        (item) => item.id === productId && item.selection === selection,
+      );
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        cart.push({ id: productId, selection, quantity });
+      }
+      saveState();
+      updateCartBadge();
+      renderCart();
+    };
+
+    if (cart.length === 0 && wishlist.length === 0) {
+      showLoginPrompt(action, action);
     } else {
-      cart.push({
-        id: productId,
-        name: product.name,
-        price: product.price,
-        selection,
-        quantity,
-      });
+      action();
     }
-    updateCartBadge();
-    renderCart();
   }
 
   function renderCart() {
@@ -443,7 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
       cartSidebar.innerHTML = `
                 <div class="sidebar-header">
                     <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart" aria-label="Close cart">&times;</button>
+                    <button class="close-btn" data-action="close-cart">&times;</button>
                 </div>
                 <div class="sidebar-empty">
                     <p>Your cart is empty</p>
@@ -452,21 +499,19 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = productMap.get(item.id);
-          const safeName = escapeHTML(product.name);
-          const safeSelection = escapeHTML(item.selection);
+          const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${safeSelection}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
+                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${safeName}</p>
-                            <p class="cart-item-size">${safeSelection}</p>
+                            <p class="cart-item-name">${product.name}</p>
+                            <p class="cart-item-size">${item.selection}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
-                                <button class="qty-btn" data-action="decrease-cart-qty" aria-label="Decrease cart quantity">-</button>
+                                <button class="qty-btn" data-action="decrease-cart-qty">-</button>
                                 <span class="qty-display">${item.quantity}</span>
-                                <button class="qty-btn" data-action="increase-cart-qty" aria-label="Increase cart quantity">+</button>
-                                <button class="remove-btn" data-action="remove-from-cart" aria-label="Remove item">Remove</button>
+                                <button class="qty-btn" data-action="increase-cart-qty">+</button>
+                                <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
                         </div>
                     </div>
@@ -475,14 +520,14 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = productMap.get(item.id);
+        const product = products.find((p) => p.id === item.id);
         return acc + product.price * item.quantity;
       }, 0);
 
       cartSidebar.innerHTML = `
                 <div class="sidebar-header">
                     <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart" aria-label="Close cart">&times;</button>
+                    <button class="close-btn" data-action="close-cart">&times;</button>
                 </div>
                 <div class="sidebar-items">${cartItemsHTML}</div>
                 <div class="sidebar-footer">
@@ -493,13 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
                 </div>
             `;
-
-            const checkoutBtn = cartSidebar.querySelector('.checkout-btn');
-            checkoutBtn.addEventListener('click', () => {
-                localStorage.setItem('cart', JSON.stringify(cart));
-                window.location.href = 'checkout.html';
-            });
-        }
+    }
   }
 
   function renderWishlist() {
@@ -508,7 +547,7 @@ document.addEventListener("DOMContentLoaded", () => {
       wishlistSidebar.innerHTML = `
                 <div class="sidebar-header">
                     <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist" aria-label="Close wishlist">&times;</button>
+                    <button class="close-btn" data-action="close-wishlist">&times;</button>
                 </div>
                 <div class="sidebar-empty">
                     <p>Your wishlist is empty</p>
@@ -520,7 +559,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = productMap.get(productId);
+          const product = products.find((p) => p.id === productId);
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -528,7 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
-                             <button class="remove-btn" data-action="remove-from-wishlist" aria-label="Remove from wishlist">Remove</button>
+                             <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
                         </div>
                     </div>
                 `;
@@ -537,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
       wishlistSidebar.innerHTML = `
                 <div class="sidebar-header">
                     <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist" aria-label="Close wishlist">&times;</button>
+                    <button class="close-btn" data-action="close-wishlist">&times;</button>
                 </div>
                 <div class="sidebar-items">${wishlistItemsHTML}</div>
                 <div class="sidebar-footer">
@@ -653,38 +692,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  categoryFilters.forEach(filter => {
-      filter.addEventListener('click', () => {
-          const isAlreadyActive = filter.classList.contains('active');
-
-          categoryFilters.forEach(f => f.classList.remove('active'));
-
-          if (isAlreadyActive) {
-              activeCategory = 'all';
-          } else {
-              filter.classList.add('active');
-              activeCategory = filter.dataset.category;
-          }
-
-          activeTag = 'all';
-          filterTags.forEach(t => t.classList.remove('active'));
-          const allTag = document.querySelector('.filter-tag[data-filter="all"]');
-          if (allTag) {
-              allTag.classList.add('active');
-          }
-
-          renderProducts();
-      });
-  });
-
   function renderCouples() {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
     couplesGrid.innerHTML = "";
 
-        // Find all products with the 'couplegoals' tag
-        const coupleProducts = products.filter(p => p.tags.includes('couplegoals'));
+    // Find all products with the 'couplegoals' tag
+    const coupleProducts = products.filter((p) =>
+      p.tags.includes("couplegoals"),
+    );
 
     // Ensure we have an even number for pairing
     const pairs = [];
@@ -705,19 +722,21 @@ document.addEventListener("DOMContentLoaded", () => {
     pairs.forEach((pair) => {
       const [item1, item2] = pair;
       const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+      const safeName1 = escapeHTML(item1.name);
+      const safeName2 = escapeHTML(item2.name);
 
       const coupleCard = `
                 <div class="couple-card">
                     <div class="couple-products">
-                        <img src="${item1.image}" alt="${item1.name}" class="couple-product-img">
-                        <img src="${item2.image}" alt="${item2.name}" class="couple-product-img">
+                        <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                        <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
                     </div>
                     <div>
-                        <h3 style="margin-bottom: 0.5rem">${item1.name} + ${item2.name}</h3>
-                        <p style="color: #b4b4b4; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
+                        <h3 style="margin-bottom: 0.5rem">${safeName1} + ${safeName2}</h3>
+                        <p style="color: #888; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
                         <div style="display: flex; justify-content: space-between; align-items: center">
                             <div>
-                                <span style="text-decoration: line-through; color: #a3a3a3; font-size: 0.9rem">₹${(item1.price + item2.price).toFixed(2)}</span>
+                                <span style="text-decoration: line-through; color: #666; font-size: 0.9rem">₹${(item1.price + item2.price).toFixed(2)}</span>
                                 <span style="color: #3b82f6; font-weight: 700; font-size: 1.2rem; margin-left: 0.5rem">₹${bundlePrice.toFixed(2)}</span>
                             </div>
                             <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
@@ -734,8 +753,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = productMap.get(id1);
-        const product2 = productMap.get(id2);
+        const product1 = products.find((p) => p.id === id1);
+        const product2 = products.find((p) => p.id === id2);
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
