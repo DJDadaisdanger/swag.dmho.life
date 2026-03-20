@@ -48,3 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
     });
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { escapeHTML };
+}
