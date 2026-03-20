@@ -13,8 +13,8 @@ function escapeHTML(str) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const orderItems = document.getElementById('order-items');
-    const totalPrice = document.getElementById('total-price');
+    const orderItems = document.getElementById('summary-items');
+    const totalPrice = document.getElementById('summary-total');
     const backToShopBtn = document.getElementById('back-to-shop');
 
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let total = 0;
         cart.forEach(item => {
             const orderItem = document.createElement('div');
-            orderItem.classList.add('order-item');
+            orderItem.classList.add('summary-item');
             const safeName = escapeHTML(item.name);
             const safeQuantity = escapeHTML(item.quantity);
             orderItem.innerHTML = `
