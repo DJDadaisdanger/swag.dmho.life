@@ -105,20 +105,6 @@ const products = [
   },
 ];
 
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>"']/g, function(match) {
-    const escapeMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return escapeMap[match];
-  });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
