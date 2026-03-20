@@ -1,0 +1,12 @@
+127.0.0.1 - - [20/Mar/2026 09:26:12] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:12] "GET /js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/mug.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/couple%20goals.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/brainrot.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/nerdy.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/intellactual.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/robo.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/covers/cute.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/t%20sherting.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/covers/pair%20A.svg HTTP/1.1" 200 -
+127.0.0.1 - - [20/Mar/2026 09:26:13] "GET /assets/covers/totem.svg HTTP/1.1" 200 -
