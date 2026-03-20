@@ -1,50 +1,50 @@
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>"']/g, function(match) {
-    const escapeMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return escapeMap[match];
-  });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const orderItems = document.getElementById('order-items');
-    const totalPrice = document.getElementById('total-price');
-    const backToShopBtn = document.getElementById('back-to-shop');
+    const orderItems = document.getElementById('summary-items');
+    const totalPrice = document.getElementById('summary-total');
+    const backToShopBtn = document.querySelector('.back-to-shop-btn');
 
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
     if (cart.length === 0) {
         if (orderItems) {
-            orderItems.innerHTML = '<p>Your cart is empty.</p>';
+            const emptyMsg = document.createElement('p');
+            emptyMsg.textContent = 'Your cart is empty.';
+            orderItems.appendChild(emptyMsg);
         }
     } else {
         let total = 0;
         cart.forEach(item => {
             const orderItem = document.createElement('div');
             orderItem.classList.add('order-item');
-            const safeName = escapeHTML(item.name);
-            const safeQuantity = escapeHTML(item.quantity);
-            orderItem.innerHTML = `
-                <span>${safeName} x ${safeQuantity}</span>
-                <span>$${(item.price * item.quantity).toFixed(2)}</span>
-            `;
+            orderItem.classList.add('summary-item');
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = `${item.name} x ${item.quantity}`;
+
+            const priceSpan = document.createElement('span');
+            priceSpan.textContent = `₹${(item.price * item.quantity).toFixed(2)}`;
+
+            orderItem.appendChild(nameSpan);
+            orderItem.appendChild(priceSpan);
+
             if (orderItems) {
                 orderItems.appendChild(orderItem);
             }
             total += item.price * item.quantity;
         });
         if (totalPrice) {
-            totalPrice.textContent = `$${total.toFixed(2)}`;
+            totalPrice.textContent = `₹${total.toFixed(2)}`;
         }
     }
 
-    backToShopBtn.addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
+    if (backToShopBtn) {
+        backToShopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'index.html';
+        });
+    }
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { escapeHTML };
+}
