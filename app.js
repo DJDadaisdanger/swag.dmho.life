@@ -217,6 +217,18 @@ function getCookie(name) {
         // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
     setCookie("cart", JSON.stringify(cart));
     setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(error => {
+        console.error('Error syncing state with backend:', error);
+      });
+    }
   }
 
   function renderProducts() {
