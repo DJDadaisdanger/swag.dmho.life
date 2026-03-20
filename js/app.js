@@ -416,16 +416,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      cart.push({
-        id: productId,
-        name: product.name,
-        price: product.price,
-        selection,
-        quantity,
-      });
+      action();
     }
-    updateCartBadge();
-    renderCart();
   }
 
   function renderCart() {
