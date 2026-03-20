@@ -531,11 +531,12 @@ function getCookie(name) {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
           const product = products.find((p) => p.id === productId);
+          const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${product.name}</p>
+                            <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                              <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
                         </div>
