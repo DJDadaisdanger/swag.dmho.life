@@ -225,29 +225,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    if (localStorage.getItem("isLoggedIn") === "true") {
-      fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ cart, wishlist })
-      }).catch(err => console.error("Error syncing state:", err));
-    }
     localStorage.setItem("cart", JSON.stringify(cart));
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
 
-    // Sync with backend if logged in
     if (isLoggedIn) {
-      fetch("/api/sync", {
-        method: "POST",
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      fetch('/api/sync', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          // Placeholder for auth token
-          "Authorization": "Bearer " + (localStorage.getItem("authToken") || "dummy-token")
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ cart, wishlist })
-      }).catch(err => console.error("Failed to sync state to backend:", err));
+      }).catch(error => {
+        console.error('Error syncing state with backend:', error);
+      });
     }
   }
 
@@ -473,8 +464,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
-      action();
+      cart.push({
+        id: productId,
+        name: product.name,
+        price: product.price,
+        selection,
+        quantity,
+      });
     }
+    updateCartBadge();
+    renderCart();
   }
 
   function renderCart() {
@@ -816,7 +815,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initApp();
 });
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { escapeHTML };
-}

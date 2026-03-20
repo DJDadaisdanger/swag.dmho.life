@@ -105,27 +105,13 @@ const products = [
   },
 ];
 
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>"']/g, function(match) {
-    const escapeMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return escapeMap[match];
-  });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
 
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
     const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/;Secure;SameSite=Strict";
+    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
 }
 
 function getCookie(name) {
@@ -245,6 +231,19 @@ function getCookie(name) {
         // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
     setCookie("cart", JSON.stringify(cart));
     setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cart, wishlist })
+      }).catch(error => {
+        console.error('Error syncing state with backend:', error);
+      });
+    }
   }
 
   function renderProducts() {
@@ -501,19 +500,16 @@ function getCookie(name) {
       const cartItemsHTML = cart
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
-          const safeName = escapeHTML(product.name);
-          const safeSelection = escapeHTML(item.selection);
-          const safeQuantity = escapeHTML(item.quantity);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${safeSelection}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
+                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${safeName}</p>
-                            <p class="cart-item-size">${safeSelection}</p>
+                            <p class="cart-item-name">${product.name}</p>
+                            <p class="cart-item-size">${item.selection}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${safeQuantity}</span>
+                                <span class="qty-display">${item.quantity}</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
