@@ -1,35 +1,33 @@
-const products = Array.from({ length: 1000 }, (_, i) => ({
-  id: i + 1,
-  name: `Product ${i + 1}`,
-  price: Math.random() * 100,
-}));
+const products = Array.from({ length: 1000 }, (_, i) => ({ id: i + 1, name: `Product ${i + 1}`, price: 10 }));
+const cart = Array.from({ length: 10000 }, (_, i) => ({ id: (i % 1000) + 1, quantity: 1 }));
 
-const cart = Array.from({ length: 1000 }, (_, i) => ({
-  id: Math.floor(Math.random() * 1000) + 1,
-  quantity: Math.floor(Math.random() * 5) + 1,
-}));
-
-// Baseline using find
-console.time('Baseline: cart total using find()');
-for (let i = 0; i < 10000; i++) {
-  const total = cart.reduce((acc, item) => {
-    const product = products.find((p) => p.id === item.id);
-    return acc + product.price * item.quantity;
-  }, 0);
+// Baseline: products.find
+const startFind = performance.now();
+let totalFind = 0;
+for (let i = 0; i < cart.length; i++) {
+    const item = cart[i];
+    const product = products.find(p => p.id === item.id);
+    totalFind += product.price * item.quantity;
 }
-console.timeEnd('Baseline: cart total using find()');
+const endFind = performance.now();
+console.log(`products.find() took ${endFind - startFind} ms`);
 
-// Optimized using Map
-const productMap = products.reduce((map, p) => {
-  map[p.id] = p;
-  return map;
+// Optimized: productMap
+const startMapSetup = performance.now();
+const productMap = products.reduce((map, product) => {
+    map[product.id] = product;
+    return map;
 }, {});
+const endMapSetup = performance.now();
 
-console.time('Optimized: cart total using productMap');
-for (let i = 0; i < 10000; i++) {
-  const total = cart.reduce((acc, item) => {
+const startMap = performance.now();
+let totalMap = 0;
+for (let i = 0; i < cart.length; i++) {
+    const item = cart[i];
     const product = productMap[item.id];
-    return acc + product.price * item.quantity;
-  }, 0);
+    totalMap += product.price * item.quantity;
 }
-console.timeEnd('Optimized: cart total using productMap');
+const endMap = performance.now();
+console.log(`productMap setup took ${endMapSetup - startMapSetup} ms`);
+console.log(`productMap lookup took ${endMap - startMap} ms`);
+console.log(`Total optimized took ${(endMapSetup - startMapSetup) + (endMap - startMap)} ms`);

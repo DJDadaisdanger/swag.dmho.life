@@ -105,25 +105,6 @@ const products = [
   },
 ];
 
-const productMap = products.reduce((map, p) => {
-  map[p.id] = p;
-  return map;
-}, {});
-
-function escapeHTML(str) {
-  if (str === null || str === undefined) return '';
-  return String(str).replace(/[&<>"']/g, function(match) {
-    const escapeMap = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    };
-    return escapeMap[match];
-  });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
@@ -293,7 +274,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = productMap[productId];
+    const product = productMap.get(productId);
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -431,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const existingItem = cart.find(
       (item) => item.id === productId && item.selection === selection,
     );
-    const product = productMap[productId];
+    const product = productMap.get(productId);
     if (existingItem) {
       existingItem.quantity += quantity;
     } else {
@@ -462,7 +443,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = productMap[item.id];
+          const product = productMap.get(item.id);
           const safeName = escapeHTML(product.name);
           const safeSelection = escapeHTML(item.selection);
           return `
@@ -485,7 +466,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = productMap[item.id];
+        const product = productMap.get(item.id);
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -530,7 +511,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = productMap[productId];
+          const product = productMap.get(productId);
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -744,8 +725,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = productMap[id1];
-        const product2 = productMap[id2];
+        const product1 = productMap.get(id1);
+        const product2 = productMap.get(id2);
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
@@ -772,3 +753,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCartBadge();
   updateWishlistBadge();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { escapeHTML };
+}
