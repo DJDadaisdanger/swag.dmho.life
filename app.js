@@ -778,6 +778,4 @@ function getCookie(name) {
   renderCouples();
   updateCartBadge();
   updateWishlistBadge();
-  updateCartBadge();
-  updateWishlistBadge();
 });
