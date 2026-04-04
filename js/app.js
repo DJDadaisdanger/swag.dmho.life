@@ -781,8 +781,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCouples();
   updateCartBadge();
   updateWishlistBadge();
-  updateCartBadge();
-  updateWishlistBadge();
 });
 
 if (typeof module !== "undefined" && module.exports) {
