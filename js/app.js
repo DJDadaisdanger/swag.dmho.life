@@ -105,32 +105,35 @@ const products = [
   },
 ];
 
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
 document.addEventListener("DOMContentLoaded", () => {
 
 function setCookie(name, value, days = 7) {
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+  const d = new Date();
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie =
+    name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
 }
 
 function getCookie(name) {
-    const cname = name + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(';');
-    for(let i = 0; i <ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(cname) == 0) {
-            return c.substring(cname.length, c.length);
-        }
+  const cname = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == " ") {
+      c = c.substring(1);
     }
-    return "";
+    if (c.indexOf(cname) == 0) {
+      return c.substring(cname.length, c.length);
+    }
+  }
+  return "";
 }
 
-
+document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -327,7 +330,7 @@ function getCookie(name) {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -499,7 +502,7 @@ function getCookie(name) {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap[item.id];
           return `
                     <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
                         <img src="${product.image}" alt="${product.name}" class="cart-item-img">
@@ -520,7 +523,7 @@ function getCookie(name) {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -559,7 +562,7 @@ function getCookie(name) {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap[productId];
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -753,8 +756,8 @@ function getCookie(name) {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap[id1];
+        const product2 = productMap[id2];
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
@@ -779,3 +782,7 @@ function getCookie(name) {
   updateCartBadge();
   updateWishlistBadge();
 });
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getCookie, setCookie };
+}
