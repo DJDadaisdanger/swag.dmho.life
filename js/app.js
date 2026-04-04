@@ -250,7 +250,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderProducts() {
-    productsGrid.innerHTML = "";
     const filteredProducts = products.filter((product) => {
       const categoryMatch =
         activeCategory === "all" || product.category === activeCategory;
@@ -258,9 +257,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return categoryMatch && tagMatch;
     });
 
-    filteredProducts.forEach((product) => {
-      const safeName = escapeHTML(product.name);
-      const productCard = `
+    productsGrid.innerHTML = filteredProducts
+      .map((product) => {
+        const safeName = escapeHTML(product.name);
+        return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <div class="product-image-wrapper">
                         <img src="${product.image}" alt="${safeName}" class="product-image">
@@ -279,8 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </button>
                 </div>
             `;
-      productsGrid.insertAdjacentHTML("beforeend", productCard);
-    });
+      })
+      .join("");
   }
 
   function updateWishlistBadge() {
@@ -699,8 +699,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
-    couplesGrid.innerHTML = "";
-
     // Find all products with the 'couplegoals' tag
     const coupleProducts = products.filter((p) =>
       p.tags.includes("couplegoals"),
@@ -722,13 +720,14 @@ document.addEventListener("DOMContentLoaded", () => {
       ]);
     }
 
-    pairs.forEach((pair) => {
-      const [item1, item2] = pair;
-      const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
-      const safeName1 = escapeHTML(item1.name);
-      const safeName2 = escapeHTML(item2.name);
+    couplesGrid.innerHTML = pairs
+      .map((pair) => {
+        const [item1, item2] = pair;
+        const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+        const safeName1 = escapeHTML(item1.name);
+        const safeName2 = escapeHTML(item2.name);
 
-      const coupleCard = `
+        return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
@@ -747,8 +746,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `;
-      couplesGrid.insertAdjacentHTML("beforeend", coupleCard);
-    });
+      })
+      .join("");
 
     couplesGrid.addEventListener("click", (e) => {
       if (e.target.classList.contains("bundle-btn")) {
