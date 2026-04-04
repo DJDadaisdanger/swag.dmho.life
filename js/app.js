@@ -105,10 +105,6 @@ const products = [
   },
 ];
 
-const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
-
-document.addEventListener("DOMContentLoaded", () => {
-
 function setCookie(name, value, days = 7) {
   const d = new Date();
   d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -229,6 +225,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function showNotification(message) {
+    const notification = document.createElement("div");
+    notification.className = "success-message";
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
         // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
@@ -330,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = productMap[productId];
+    const product = products.find((p) => p.id === productId);
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -478,6 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveState();
       updateCartBadge();
       renderCart();
+      showNotification('Added to cart');
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -502,13 +520,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = productMap[item.id];
+          const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
-                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${product.image}" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-size">${item.selection}</p>
+                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
+                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
@@ -523,7 +541,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = productMap[item.id];
+        const product = products.find((p) => p.id === item.id);
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -562,7 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = productMap[productId];
+          const product = products.find((p) => p.id === productId);
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -755,8 +773,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = productMap[id1];
-        const product2 = productMap[id2];
+        const product1 = products.find((p) => p.id === id1);
+        const product2 = products.find((p) => p.id === id2);
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";

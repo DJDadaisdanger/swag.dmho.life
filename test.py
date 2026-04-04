@@ -8,15 +8,15 @@ def run():
         # Navigate to the app
         page.goto('http://localhost:8000/index.html')
 
-        # Inject malicious payload into localstorage
+        # Inject malicious payload into cookies
         page.evaluate("""() => {
-          localStorage.setItem('cart', JSON.stringify([{
+          document.cookie = 'cart=' + encodeURIComponent(JSON.stringify([{
             id: 8,
             name: '<img src=x onerror="document.body.innerHTML=`HACKED`">',
             price: 39.99,
             selection: '<script>alert("XSS")</script>',
             quantity: 1
-          }]));
+          }])) + ';path=/';
         }""")
 
         # Reload to let app.js render the payload
