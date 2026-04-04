@@ -106,30 +106,29 @@ const products = [
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
-
-function setCookie(name, value, days = 7) {
+  function setCookie(name, value, days = 7) {
     const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
     const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
-}
+    document.cookie =
+      name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+  }
 
-function getCookie(name) {
+  function getCookie(name) {
     const cname = name + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(';');
-    for(let i = 0; i <ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(cname) == 0) {
-            return c.substring(cname.length, c.length);
-        }
+    const ca = decodedCookie.split(";");
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) == " ") {
+        c = c.substring(1);
+      }
+      if (c.indexOf(cname) == 0) {
+        return c.substring(cname.length, c.length);
+      }
     }
     return "";
-}
-
+  }
 
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
@@ -145,22 +144,22 @@ function getCookie(name) {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = getCookie('wishlist') ? JSON.parse(getCookie('wishlist')) : [];
-  let cart = getCookie('cart') ? JSON.parse(getCookie('cart')) : [];
+  let wishlist = getCookie("wishlist") ? JSON.parse(getCookie("wishlist")) : [];
+  let cart = getCookie("cart") ? JSON.parse(getCookie("cart")) : [];
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = getCookie('isLoggedIn') === 'true';
-  let hasSeenLoginPrompt = getCookie('hasSeenLoginPrompt') === 'true';
+  let isLoggedIn = getCookie("isLoggedIn") === "true";
+  let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
 
   function escapeHTML(str) {
-    if (str === null || str === undefined) return '';
-    return String(str).replace(/[&<>"']/g, function(match) {
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/[&<>"']/g, function (match) {
       const escapeMap = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
       };
       return escapeMap[match];
     });
@@ -228,20 +227,20 @@ function getCookie(name) {
 
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-        // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
     setCookie("cart", JSON.stringify(cart));
     setCookie("wishlist", JSON.stringify(wishlist));
 
     if (isLoggedIn) {
       // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
-      fetch('/api/sync', {
-        method: 'POST',
+      fetch("/api/sync", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ cart, wishlist })
-      }).catch(error => {
-        console.error('Error syncing state with backend:', error);
+        body: JSON.stringify({ cart, wishlist }),
+      }).catch((error) => {
+        console.error("Error syncing state with backend:", error);
       });
     }
   }
@@ -259,21 +258,23 @@ function getCookie(name) {
       const safeName = escapeHTML(product.name);
       const productCard = `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
+                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
                     <div class="product-image-wrapper">
                         <img src="${product.image}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">${safeName}</h3>
+                        <div>
+                            <h3 class="product-name">${safeName}</h3>
+                        </div>
                         <div class="product-meta">
                             <span class="product-price">₹${product.price}</span>
                             <span class="product-status">In Stock</span>
                         </div>
                     </div>
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                    </button>
                 </div>
             `;
       productsGrid.insertAdjacentHTML("beforeend", productCard);
@@ -728,19 +729,23 @@ function getCookie(name) {
       const coupleCard = `
                 <div class="couple-card">
                     <div class="couple-products">
-                        <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
-                        <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                        <div class="couple-product-wrapper">
+                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                        </div>
+                        <div class="couple-product-wrapper">
+                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                        </div>
                     </div>
                     <div>
-                        <h3 style="margin-bottom: 0.5rem">${safeName1} + ${safeName2}</h3>
-                        <p style="color: #888; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center">
-                            <div>
-                                <span style="text-decoration: line-through; color: #666; font-size: 0.9rem">₹${(item1.price + item2.price).toFixed(2)}</span>
-                                <span style="color: #3b82f6; font-weight: 700; font-size: 1.2rem; margin-left: 0.5rem">₹${bundlePrice.toFixed(2)}</span>
-                            </div>
-                            <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
+                        <h3 class="bundle-title">${safeName1} + ${safeName2}</h3>
+                        <p class="bundle-desc">Perfect match combo. Save 10% when you buy together!</p>
+                    </div>
+                    <div class="bundle-price-row">
+                        <div>
+                            <span class="old-price">₹${(item1.price + item2.price).toFixed(2)}</span>
+                            <span class="bundle-price">₹${bundlePrice.toFixed(2)}</span>
                         </div>
+                        <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
                     </div>
                 </div>
             `;
