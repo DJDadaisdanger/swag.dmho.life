@@ -105,31 +105,31 @@ const products = [
   },
 ];
 
-document.addEventListener("DOMContentLoaded", () => {
-  function setCookie(name, value, days = 7) {
-    const d = new Date();
-    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-    const expires = "expires=" + d.toUTCString();
-    document.cookie =
-      name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
-  }
+function setCookie(name, value, days = 7) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie =
+    name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+}
 
-  function getCookie(name) {
-    const cname = name + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(";");
-    for (let i = 0; i < ca.length; i++) {
-      let c = ca[i];
-      while (c.charAt(0) == " ") {
-        c = c.substring(1);
-      }
-      if (c.indexOf(cname) == 0) {
-        return c.substring(cname.length, c.length);
-      }
+function getCookie(name) {
+  const cname = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == " ") {
+      c = c.substring(1);
     }
-    return "";
+    if (c.indexOf(cname) == 0) {
+      return c.substring(cname.length, c.length);
+    }
   }
+  return "";
+}
 
+document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -225,6 +225,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function showNotification(message) {
+    const notification = document.createElement("div");
+    notification.className = "success-message";
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
     // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
@@ -246,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderProducts() {
-    productsGrid.innerHTML = "";
     const filteredProducts = products.filter((product) => {
       const categoryMatch =
         activeCategory === "all" || product.category === activeCategory;
@@ -254,9 +274,10 @@ document.addEventListener("DOMContentLoaded", () => {
       return categoryMatch && tagMatch;
     });
 
-    filteredProducts.forEach((product) => {
-      const safeName = escapeHTML(product.name);
-      const productCard = `
+    productsGrid.innerHTML = filteredProducts
+      .map((product) => {
+        const safeName = escapeHTML(product.name);
+        return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
@@ -277,8 +298,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `;
-      productsGrid.insertAdjacentHTML("beforeend", productCard);
-    });
+      })
+      .join("");
   }
 
   function updateWishlistBadge() {
@@ -476,6 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveState();
       updateCartBadge();
       renderCart();
+      showNotification('Added to cart');
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -502,11 +524,11 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
-                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${product.image}" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-size">${item.selection}</p>
+                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
+                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
@@ -697,8 +719,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
-    couplesGrid.innerHTML = "";
-
     // Find all products with the 'couplegoals' tag
     const coupleProducts = products.filter((p) =>
       p.tags.includes("couplegoals"),
@@ -720,13 +740,14 @@ document.addEventListener("DOMContentLoaded", () => {
       ]);
     }
 
-    pairs.forEach((pair) => {
-      const [item1, item2] = pair;
-      const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
-      const safeName1 = escapeHTML(item1.name);
-      const safeName2 = escapeHTML(item2.name);
+    couplesGrid.innerHTML = pairs
+      .map((pair) => {
+        const [item1, item2] = pair;
+        const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+        const safeName1 = escapeHTML(item1.name);
+        const safeName2 = escapeHTML(item2.name);
 
-      const coupleCard = `
+        return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
@@ -749,8 +770,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 </div>
             `;
-      couplesGrid.insertAdjacentHTML("beforeend", coupleCard);
-    });
+      })
+      .join("");
 
     couplesGrid.addEventListener("click", (e) => {
       if (e.target.classList.contains("bundle-btn")) {
@@ -783,6 +804,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCouples();
   updateCartBadge();
   updateWishlistBadge();
-  updateCartBadge();
-  updateWishlistBadge();
 });
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getCookie, setCookie };
+}
