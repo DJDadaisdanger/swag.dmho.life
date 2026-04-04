@@ -781,3 +781,7 @@ function getCookie(name) {
   updateCartBadge();
   updateWishlistBadge();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { setCookie, getCookie };
+}

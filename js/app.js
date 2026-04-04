@@ -105,8 +105,6 @@ const products = [
   },
 ];
 
-document.addEventListener("DOMContentLoaded", () => {
-
 function setCookie(name, value, days = 7) {
     const d = new Date();
     d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -130,7 +128,7 @@ function getCookie(name) {
     return "";
 }
 
-
+document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -781,3 +779,7 @@ function getCookie(name) {
   updateCartBadge();
   updateWishlistBadge();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { setCookie, getCookie };
+}
