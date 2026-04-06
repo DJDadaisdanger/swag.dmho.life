@@ -279,7 +279,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const safeName = escapeHTML(product.name);
         return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                    <button class="wishlist-btn ${
+                      wishlist.includes(product.id) ? "active" : ""
+                    }">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
@@ -385,13 +387,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <option value="Google Pixel 8">
                                 <option value="Google Pixel 8 Pro">
                                 <option value="Google Pixel 9">
-                                <option value="Google Pixel 9 Pro">`
+                                <option value="Google Pixel 9 Pro" />`
                                 : `<option value="iPad Pro 11">
                                 <option value="iPad Pro 12.9">
                                 <option value="iPad Air">
                                 <option value="iPad Mini">
                                 <option value="iPad 10th Gen">
-                                <option value="iPad 9th Gen">`
+                                <option value="iPad 9th Gen" />`
                             }
                         </datalist>
                     </div>
@@ -524,15 +526,25 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${escapeHTML(item.selection)}">
-                        <img src="${product.image}" alt="${escapeHTML(product.name)}" class="cart-item-img">
+                    <div class="cart-item" data-id="${
+                      item.id
+                    }" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${
+                          product.image
+                        }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
-                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
+                            <p class="cart-item-name">${escapeHTML(
+                              product.name,
+                            )}</p>
+                            <p class="cart-item-size">${escapeHTML(
+                              item.selection,
+                            )}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${item.quantity}</span>
+                                <span class="qty-display">${
+                                  item.quantity
+                                }</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
@@ -763,10 +775,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="bundle-price-row">
                         <div>
-                            <span class="old-price">₹${(item1.price + item2.price).toFixed(2)}</span>
-                            <span class="bundle-price">₹${bundlePrice.toFixed(2)}</span>
+                            <span class="old-price">₹${(
+                              item1.price + item2.price
+                            ).toFixed(2)}</span>
+                            <span class="bundle-price">₹${bundlePrice.toFixed(
+                              2,
+                            )}</span>
                         </div>
-                        <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
+                        <button class="bundle-btn" data-id1="${
+                          item1.id
+                        }" data-id2="${item2.id}">Add Bundle</button>
                     </div>
                 </div>
             `;
