@@ -106,26 +106,27 @@ const products = [
 ];
 
 function setCookie(name, value, days = 7) {
-    const d = new Date();
-    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-    const expires = "expires=" + d.toUTCString();
-    document.cookie = name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
+  const d = new Date();
+  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  const expires = "expires=" + d.toUTCString();
+  document.cookie =
+    name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
 }
 
 function getCookie(name) {
-    const cname = name + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const ca = decodedCookie.split(';');
-    for(let i = 0; i <ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(cname) == 0) {
-            return c.substring(cname.length, c.length);
-        }
+  const cname = name + "=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == " ") {
+      c = c.substring(1);
     }
-    return "";
+    if (c.indexOf(cname) == 0) {
+      return c.substring(cname.length, c.length);
+    }
+  }
+  return "";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -143,22 +144,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = getCookie('wishlist') ? JSON.parse(getCookie('wishlist')) : [];
-  let cart = getCookie('cart') ? JSON.parse(getCookie('cart')) : [];
+  let wishlist = getCookie("wishlist") ? JSON.parse(getCookie("wishlist")) : [];
+  let cart = getCookie("cart") ? JSON.parse(getCookie("cart")) : [];
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = getCookie('isLoggedIn') === 'true';
-  let hasSeenLoginPrompt = getCookie('hasSeenLoginPrompt') === 'true';
+  let isLoggedIn = getCookie("isLoggedIn") === "true";
+  let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
 
   function escapeHTML(str) {
-    if (str === null || str === undefined) return '';
-    return String(str).replace(/[&<>"']/g, function(match) {
+    if (str === null || str === undefined) return "";
+    return String(str).replace(/[&<>"']/g, function (match) {
       const escapeMap = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
       };
       return escapeMap[match];
     });
@@ -224,28 +225,48 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function showNotification(message) {
+    const notification = document.createElement("div");
+    notification.className = "success-message";
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+
   function saveState() {
     // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-        // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
     setCookie("cart", JSON.stringify(cart));
     setCookie("wishlist", JSON.stringify(wishlist));
 
     if (isLoggedIn) {
       // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
-      fetch('/api/sync', {
-        method: 'POST',
+      fetch("/api/sync", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ cart, wishlist })
-      }).catch(error => {
-        console.error('Error syncing state with backend:', error);
+        body: JSON.stringify({ cart, wishlist }),
+      }).catch((error) => {
+        console.error("Error syncing state with backend:", error);
       });
     }
   }
 
   function renderProducts() {
-    productsGrid.innerHTML = "";
     const filteredProducts = products.filter((product) => {
       const categoryMatch =
         activeCategory === "all" || product.category === activeCategory;
@@ -253,29 +274,32 @@ document.addEventListener("DOMContentLoaded", () => {
       return categoryMatch && tagMatch;
     });
 
-    filteredProducts.forEach((product) => {
-      const safeName = escapeHTML(product.name);
-      const productCard = `
+    productsGrid.innerHTML = filteredProducts
+      .map((product) => {
+        const safeName = escapeHTML(product.name);
+        return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
+                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
                     <div class="product-image-wrapper">
                         <img src="${product.image}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
-                        <h3 class="product-name">${safeName}</h3>
+                        <div>
+                            <h3 class="product-name">${safeName}</h3>
+                        </div>
                         <div class="product-meta">
                             <span class="product-price">₹${product.price}</span>
                             <span class="product-status">In Stock</span>
                         </div>
                     </div>
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                    </button>
                 </div>
             `;
-      productsGrid.insertAdjacentHTML("beforeend", productCard);
-    });
+      })
+      .join("");
   }
 
   function updateWishlistBadge() {
@@ -473,6 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveState();
       updateCartBadge();
       renderCart();
+      showNotification('Added to cart');
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -499,11 +524,11 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${item.selection}">
-                        <img src="${product.image}" alt="${product.name}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id}" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${product.image}" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${product.name}</p>
-                            <p class="cart-item-size">${item.selection}</p>
+                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
+                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
@@ -694,8 +719,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
-    couplesGrid.innerHTML = "";
-
     // Find all products with the 'couplegoals' tag
     const coupleProducts = products.filter((p) =>
       p.tags.includes("couplegoals"),
@@ -717,33 +740,38 @@ document.addEventListener("DOMContentLoaded", () => {
       ]);
     }
 
-    pairs.forEach((pair) => {
-      const [item1, item2] = pair;
-      const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
-      const safeName1 = escapeHTML(item1.name);
-      const safeName2 = escapeHTML(item2.name);
+    couplesGrid.innerHTML = pairs
+      .map((pair) => {
+        const [item1, item2] = pair;
+        const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
+        const safeName1 = escapeHTML(item1.name);
+        const safeName2 = escapeHTML(item2.name);
 
-      const coupleCard = `
+        return `
                 <div class="couple-card">
                     <div class="couple-products">
-                        <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
-                        <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                        <div class="couple-product-wrapper">
+                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                        </div>
+                        <div class="couple-product-wrapper">
+                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                        </div>
                     </div>
                     <div>
-                        <h3 style="margin-bottom: 0.5rem">${safeName1} + ${safeName2}</h3>
-                        <p style="color: #888; margin-bottom: 1rem">Perfect match combo. Save 10% when you buy together!</p>
-                        <div style="display: flex; justify-content: space-between; align-items: center">
-                            <div>
-                                <span style="text-decoration: line-through; color: #666; font-size: 0.9rem">₹${(item1.price + item2.price).toFixed(2)}</span>
-                                <span style="color: #3b82f6; font-weight: 700; font-size: 1.2rem; margin-left: 0.5rem">₹${bundlePrice.toFixed(2)}</span>
-                            </div>
-                            <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
+                        <h3 class="bundle-title">${safeName1} + ${safeName2}</h3>
+                        <p class="bundle-desc">Perfect match combo. Save 10% when you buy together!</p>
+                    </div>
+                    <div class="bundle-price-row">
+                        <div>
+                            <span class="old-price">₹${(item1.price + item2.price).toFixed(2)}</span>
+                            <span class="bundle-price">₹${bundlePrice.toFixed(2)}</span>
                         </div>
+                        <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
                     </div>
                 </div>
             `;
-      couplesGrid.insertAdjacentHTML("beforeend", coupleCard);
-    });
+      })
+      .join("");
 
     couplesGrid.addEventListener("click", (e) => {
       if (e.target.classList.contains("bundle-btn")) {
@@ -776,10 +804,8 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCouples();
   updateCartBadge();
   updateWishlistBadge();
-  updateCartBadge();
-  updateWishlistBadge();
 });
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { setCookie, getCookie };
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { getCookie, setCookie };
 }
