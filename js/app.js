@@ -509,14 +509,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function getSidebarHeaderHTML(title, action) {
+    return `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${action}">&times;</button>
+                </div>
+    `;
+  }
+
   function renderCart() {
     cartSidebar.innerHTML = "";
     if (cart.length === 0) {
       cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
+${getSidebarHeaderHTML("Your Cart", "close-cart")}
                 <div class="sidebar-empty">
                     <p>Your cart is empty</p>
                 </div>
@@ -560,10 +566,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 0);
 
       cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
+${getSidebarHeaderHTML("Your Cart", "close-cart")}
                 <div class="sidebar-items">${cartItemsHTML}</div>
                 <div class="sidebar-footer">
                     <div class="cart-total">
@@ -580,10 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
     wishlistSidebar.innerHTML = "";
     if (wishlist.length === 0) {
       wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
+${getSidebarHeaderHTML("Your Wishlist", "close-wishlist")}
                 <div class="sidebar-empty">
                     <p>Your wishlist is empty</p>
                 </div>
@@ -609,10 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .join("");
       wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
+${getSidebarHeaderHTML("Your Wishlist", "close-wishlist")}
                 <div class="sidebar-items">${wishlistItemsHTML}</div>
                 <div class="sidebar-footer">
                     <button class="checkout-btn">Sign in to save</button>
