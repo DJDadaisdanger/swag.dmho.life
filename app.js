@@ -169,25 +169,29 @@ document.addEventListener("DOMContentLoaded", () => {
   // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
   // upon successful login via the Python backend.
 
-  function showLoginPrompt(onLogin, onNvm) {
-    if (isLoggedIn || hasSeenLoginPrompt) {
-      onNvm();
-      return;
+  function enqueueLoginAction(onLogin, onNvm) {
+    window.pendingLoginActions = window.pendingLoginActions || [];
+    if (onNvm) window.pendingLoginActions.push(onNvm);
+
+    window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
+    if (onLogin) window.pendingLoginActionsLogin.push(onLogin);
+  }
+
+  function executePendingLoginActions(isLoginAction) {
+    if (isLoginAction) {
+      if (window.pendingLoginActionsLogin) {
+        window.pendingLoginActionsLogin.forEach((action) => action());
+      }
+    } else {
+      if (window.pendingLoginActions) {
+        window.pendingLoginActions.forEach((action) => action());
+      }
     }
+    window.pendingLoginActions = [];
+    window.pendingLoginActionsLogin = [];
+  }
 
-    if (document.getElementById("loginPromptModal")) {
-      // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
-      return;
-    }
-
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
-
+  function createLoginPromptModal() {
     const modalHtml = `
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
                 <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
@@ -208,9 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.remove();
       hasSeenLoginPrompt = true;
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      executePendingLoginActions(false);
     });
 
     document.getElementById("loginBtn").addEventListener("click", () => {
@@ -219,10 +221,25 @@ document.addEventListener("DOMContentLoaded", () => {
       hasSeenLoginPrompt = true;
       setCookie("isLoggedIn", "true");
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      executePendingLoginActions(true);
     });
+  }
+
+  function showLoginPrompt(onLogin, onNvm) {
+    if (isLoggedIn || hasSeenLoginPrompt) {
+      if (onNvm) onNvm();
+      return;
+    }
+
+    if (document.getElementById("loginPromptModal")) {
+      // Modal already exists, just attach to it or wait.
+      // Since we're executing back to back, the easiest is to set a global pending action queue.
+      enqueueLoginAction(onLogin, onNvm);
+      return;
+    }
+
+    enqueueLoginAction(onLogin, onNvm);
+    createLoginPromptModal();
   }
 
   function showNotification(message) {
