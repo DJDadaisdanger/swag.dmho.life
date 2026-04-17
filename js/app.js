@@ -105,6 +105,8 @@ const products = [
   },
 ];
 
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
 function setCookie(name, value, days = 7) {
   const d = new Date();
   d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -351,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -524,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap[item.id];
           return `
                     <div class="cart-item" data-id="${
                       item.id
@@ -555,7 +557,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -594,7 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap[productId];
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -797,8 +799,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap[id1];
+        const product2 = productMap[id2];
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
