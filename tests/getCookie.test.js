@@ -34,9 +34,7 @@ const mockDocument = {
 global.document = mockDocument;
 global.window = {
   location: { href: "" },
-  addEventListener: () => {},
-  pendingLoginActions: [],
-  pendingLoginActionsLogin: []
+  addEventListener: () => {}
 };
 global.Date = Date;
 global.decodeURIComponent = decodeURIComponent;

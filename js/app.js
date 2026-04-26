@@ -169,6 +169,39 @@ document.addEventListener("DOMContentLoaded", () => {
   // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
   // upon successful login via the Python backend.
 
+
+  class LoginQueue {
+    constructor() {
+      this.actions = [];
+      this.loginActions = [];
+    }
+
+    add(action) {
+      if (action) this.actions.push(action);
+    }
+
+    addLogin(action) {
+      if (action) this.loginActions.push(action);
+    }
+
+    execute() {
+      this.actions.forEach(action => action());
+      this.clear();
+    }
+
+    executeLogin() {
+      this.loginActions.forEach(action => action());
+      this.clear();
+    }
+
+    clear() {
+      this.actions = [];
+      this.loginActions = [];
+    }
+  }
+
+  const loginQueue = new LoginQueue();
+
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
       onNvm();
@@ -177,16 +210,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
+      loginQueue.add(onNvm);
+      loginQueue.addLogin(onLogin);
       return;
     }
 
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
+    loginQueue.add(onNvm);
+    loginQueue.addLogin(onLogin);
 
     const modalHtml = `
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
@@ -208,9 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.remove();
       hasSeenLoginPrompt = true;
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      loginQueue.execute();
     });
 
     document.getElementById("loginBtn").addEventListener("click", () => {
@@ -219,9 +247,7 @@ document.addEventListener("DOMContentLoaded", () => {
       hasSeenLoginPrompt = true;
       setCookie("isLoggedIn", "true");
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      loginQueue.executeLogin();
     });
   }
 
