@@ -129,6 +129,13 @@ function getCookie(name) {
   return "";
 }
 
+const getSelection = (product) => {
+  if (product.category === "Phone Covers") return "iPhone 15";
+  if (product.category === "iPad Covers") return "iPad Pro 11";
+  if (product.category !== "Mugs") return "M";
+  return "N/A";
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
@@ -800,13 +807,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const product1 = products.find((p) => p.id === id1);
         const product2 = products.find((p) => p.id === id2);
 
-        const getSelection = (product) => {
-          if (product.category === "Phone Covers") return "iPhone 15";
-          if (product.category === "iPad Covers") return "iPad Pro 11";
-          if (product.category !== "Mugs") return "M";
-          return "N/A";
-        };
-
         addToCart(id1, getSelection(product1), 1);
         addToCart(id2, getSelection(product2), 1);
 
@@ -825,5 +825,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getCookie, setCookie };
+  module.exports = { getCookie, setCookie, getSelection };
 }
