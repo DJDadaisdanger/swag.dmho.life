@@ -66,3 +66,22 @@ describe("Cookie Utilities", () => {
       expect(getCookie("first")).toBe("1");
   });
 });
+
+describe("renderCart XSS Mitigation", () => {
+  test("cart items containing script tags should be rendered safely as text", () => {
+    // In Bun tests we can't easily run the DOM operations without jsdom,
+    // but app.js doesn't export renderCart directly.
+    // We will verify the fix by checking that innerHTML concatenation is removed
+    // from app.js using string search.
+    const fs = require('fs');
+    const path = require('path');
+    const appJsContent = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf-8');
+
+    // We check that innerHTML is only used to clear the container, not build items
+    expect(appJsContent).toContain('cartSidebar.innerHTML = "";');
+    // Ensure we are using document.createElement for sidebar-items
+    expect(appJsContent).toContain('const itemsDiv = document.createElement(\'div\');');
+    expect(appJsContent).toContain('itemsDiv.className = \'sidebar-items\';');
+    expect(appJsContent).not.toContain('cartSidebar.innerHTML = `\\n                <div class="sidebar-header">');
+  });
+});

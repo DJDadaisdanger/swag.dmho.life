@@ -511,68 +511,120 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderCart() {
     cartSidebar.innerHTML = "";
+
+    const header = document.createElement('div');
+    header.className = 'sidebar-header';
+    const h3 = document.createElement('h3');
+    h3.textContent = 'Your Cart';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'close-btn';
+    closeBtn.dataset.action = 'close-cart';
+    closeBtn.textContent = '×'; // or &times; text equivalent
+    header.appendChild(h3);
+    header.appendChild(closeBtn);
+    cartSidebar.appendChild(header);
+
     if (cart.length === 0) {
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-empty">
-                    <p>Your cart is empty</p>
-                </div>
-            `;
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'sidebar-empty';
+      const emptyP = document.createElement('p');
+      emptyP.textContent = 'Your cart is empty';
+      emptyDiv.appendChild(emptyP);
+      cartSidebar.appendChild(emptyDiv);
     } else {
-      const cartItemsHTML = cart
-        .map((item) => {
-          const product = products.find((p) => p.id === item.id);
-          return `
-                    <div class="cart-item" data-id="${
-                      item.id
-                    }" data-selection="${escapeHTML(item.selection)}">
-                        <img src="${
-                          product.image
-                        }" alt="${escapeHTML(product.name)}" class="cart-item-img">
-                        <div class="cart-item-details">
-                            <p class="cart-item-name">${escapeHTML(
-                              product.name,
-                            )}</p>
-                            <p class="cart-item-size">${escapeHTML(
-                              item.selection,
-                            )}</p>
-                            <p class="cart-item-price">₹${product.price}</p>
-                            <div class="cart-item-actions">
-                                <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${
-                                  item.quantity
-                                }</span>
-                                <button class="qty-btn" data-action="increase-cart-qty">+</button>
-                                <button class="remove-btn" data-action="remove-from-cart">Remove</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-        })
-        .join("");
+      const itemsDiv = document.createElement('div');
+      itemsDiv.className = 'sidebar-items';
+
+      cart.forEach((item) => {
+        const product = products.find((p) => p.id === item.id);
+
+        const cartItemDiv = document.createElement('div');
+        cartItemDiv.className = 'cart-item';
+        cartItemDiv.dataset.id = item.id;
+        cartItemDiv.dataset.selection = item.selection;
+
+        const img = document.createElement('img');
+        img.src = product.image;
+        img.alt = product.name;
+        img.className = 'cart-item-img';
+        cartItemDiv.appendChild(img);
+
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'cart-item-details';
+
+        const nameP = document.createElement('p');
+        nameP.className = 'cart-item-name';
+        nameP.textContent = product.name;
+        detailsDiv.appendChild(nameP);
+
+        const sizeP = document.createElement('p');
+        sizeP.className = 'cart-item-size';
+        sizeP.textContent = item.selection;
+        detailsDiv.appendChild(sizeP);
+
+        const priceP = document.createElement('p');
+        priceP.className = 'cart-item-price';
+        priceP.textContent = `₹${product.price}`;
+        detailsDiv.appendChild(priceP);
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'cart-item-actions';
+
+        const decBtn = document.createElement('button');
+        decBtn.className = 'qty-btn';
+        decBtn.dataset.action = 'decrease-cart-qty';
+        decBtn.textContent = '-';
+        actionsDiv.appendChild(decBtn);
+
+        const qtySpan = document.createElement('span');
+        qtySpan.className = 'qty-display';
+        qtySpan.textContent = item.quantity;
+        actionsDiv.appendChild(qtySpan);
+
+        const incBtn = document.createElement('button');
+        incBtn.className = 'qty-btn';
+        incBtn.dataset.action = 'increase-cart-qty';
+        incBtn.textContent = '+';
+        actionsDiv.appendChild(incBtn);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-btn';
+        removeBtn.dataset.action = 'remove-from-cart';
+        removeBtn.textContent = 'Remove';
+        actionsDiv.appendChild(removeBtn);
+
+        detailsDiv.appendChild(actionsDiv);
+        cartItemDiv.appendChild(detailsDiv);
+        itemsDiv.appendChild(cartItemDiv);
+      });
+
+      cartSidebar.appendChild(itemsDiv);
 
       const total = cart.reduce((acc, item) => {
         const product = products.find((p) => p.id === item.id);
         return acc + product.price * item.quantity;
       }, 0);
 
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-items">${cartItemsHTML}</div>
-                <div class="sidebar-footer">
-                    <div class="cart-total">
-                        <span>Total</span>
-                        <span>₹${total.toFixed(2)}</span>
-                    </div>
-                    <button class="checkout-btn" data-action="checkout">Checkout</button>
-                </div>
-            `;
+      const footerDiv = document.createElement('div');
+      footerDiv.className = 'sidebar-footer';
+
+      const totalDiv = document.createElement('div');
+      totalDiv.className = 'cart-total';
+      const spanLabel = document.createElement('span');
+      spanLabel.textContent = 'Total';
+      const spanValue = document.createElement('span');
+      spanValue.textContent = `₹${total.toFixed(2)}`;
+      totalDiv.appendChild(spanLabel);
+      totalDiv.appendChild(spanValue);
+      footerDiv.appendChild(totalDiv);
+
+      const checkoutBtn = document.createElement('button');
+      checkoutBtn.className = 'checkout-btn';
+      checkoutBtn.dataset.action = 'checkout';
+      checkoutBtn.textContent = 'Checkout';
+      footerDiv.appendChild(checkoutBtn);
+
+      cartSidebar.appendChild(footerDiv);
     }
   }
 
