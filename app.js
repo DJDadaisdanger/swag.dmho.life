@@ -107,7 +107,7 @@ const products = [
 
 function setCookie(name, value, days = 7) {
   const d = new Date();
-  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie =
     name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <option value="iPhone 17e">
                                 <option value="iPhone 17 Pro">
                                 <option value="iPhone 17 Pro Max">`
-                                :`<option value="iPad Pro 11">
+                                : `<option value="iPad Pro 11">
                                 <option value="iPad Pro 12.9">
                                 <option value="iPad Air">
                                 <option value="iPad Mini">
@@ -491,7 +491,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveState();
       updateCartBadge();
       renderCart();
-      showNotification('Added to cart');
+      showNotification("Added to cart");
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -501,20 +501,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderCart() {
-    cartSidebar.innerHTML = "";
-    if (cart.length === 0) {
-      cartSidebar.innerHTML = `
+  function renderSidebar(
+    sidebarEl,
+    title,
+    closeAction,
+    emptyMessage,
+    itemsHTML,
+    footerHTML,
+  ) {
+    sidebarEl.innerHTML = `
                 <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${closeAction}">&times;</button>
                 </div>
-                <div class="sidebar-empty">
-                    <p>Your cart is empty</p>
-                </div>
+                ${
+                  itemsHTML
+                    ? `<div class="sidebar-items">${itemsHTML}</div>`
+                    : `<div class="sidebar-empty">
+                    <p>${emptyMessage}</p>
+                </div>`
+                }
+                ${
+                  footerHTML
+                    ? `<div class="sidebar-footer">
+                    ${footerHTML}
+                </div>`
+                    : ""
+                }
             `;
-    } else {
-      const cartItemsHTML = cart
+  }
+  function renderCart() {
+    let itemsHTML = "";
+    let footerHTML = "";
+
+    if (cart.length > 0) {
+      itemsHTML = cart
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
           return `
@@ -541,40 +562,31 @@ document.addEventListener("DOMContentLoaded", () => {
         return acc + product.price * item.quantity;
       }, 0);
 
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-items">${cartItemsHTML}</div>
-                <div class="sidebar-footer">
+      footerHTML = `
                     <div class="cart-total">
                         <span>Total</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
-                </div>
-            `;
+      `;
     }
+
+    renderSidebar(
+      cartSidebar,
+      "Your Cart",
+      "close-cart",
+      "Your cart is empty",
+      itemsHTML,
+      footerHTML,
+    );
   }
 
   function renderWishlist() {
-    wishlistSidebar.innerHTML = "";
-    if (wishlist.length === 0) {
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-empty">
-                    <p>Your wishlist is empty</p>
-                </div>
-                 <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
-    } else {
-      const wishlistItemsHTML = wishlist
+    let itemsHTML = "";
+    let footerHTML = `<button class="checkout-btn">Sign in to save</button>`;
+
+    if (wishlist.length > 0) {
+      itemsHTML = wishlist
         .map((productId) => {
           const product = products.find((p) => p.id === productId);
           const safeName = escapeHTML(product.name);
@@ -590,17 +602,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
         })
         .join("");
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-items">${wishlistItemsHTML}</div>
-                <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
     }
+
+    renderSidebar(
+      wishlistSidebar,
+      "Your Wishlist",
+      "close-wishlist",
+      "Your wishlist is empty",
+      itemsHTML,
+      footerHTML,
+    );
   }
 
   cartBtn.addEventListener("click", () => {
