@@ -279,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const safeName = escapeHTML(product.name);
         return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                    <button id="wishlist-btn-${product.id}" class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
@@ -331,10 +331,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const action = () => {
       if (index > -1) {
         wishlist.splice(index, 1);
-        btn.classList.remove("active");
+        if (btn) btn.classList.remove("active");
       } else {
         wishlist.push(productId);
-        btn.classList.add("active");
+        if (btn) btn.classList.add("active");
       }
       saveState();
       updateWishlistBadge();
@@ -665,9 +665,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const productId = parseInt(cartItem.dataset.id);
       toggleWishlist(
         productId,
-        document.querySelector(
-          `.product-card[data-id="${productId}"] .wishlist-btn`,
-        ),
+        document.getElementById(`wishlist-btn-${productId}`),
       );
     }
   });
