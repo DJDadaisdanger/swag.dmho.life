@@ -129,7 +129,61 @@ function getCookie(name) {
   return "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const BackendAPI = {
+  async getUserData() {
+    let wishlist = [];
+    let cart = [];
+    let isLoggedIn = getCookie("isLoggedIn") === "true";
+    let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
+
+    try {
+      const storedWishlist = localStorage.getItem('wishlist') || getCookie("wishlist");
+      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
+
+      const storedCart = localStorage.getItem('cart') || getCookie("cart");
+      if (storedCart) cart = JSON.parse(storedCart);
+    } catch (e) {
+      console.error("Error parsing stored data", e);
+    }
+
+    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt };
+  },
+
+  async login() {
+    // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
+    // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
+    // upon successful login via the Python backend.
+    setCookie("isLoggedIn", "true");
+    setCookie("hasSeenLoginPrompt", "true");
+    return true;
+  },
+
+  async syncData(cart, wishlist, isLoggedIn) {
+    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    setCookie("cart", JSON.stringify(cart));
+    setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      try {
+        await fetch("/api/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ cart, wishlist }),
+        });
+      } catch (error) {
+        console.error("Error syncing state with backend:", error);
+      }
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -144,12 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = getCookie("wishlist") ? JSON.parse(getCookie("wishlist")) : [];
-  let cart = getCookie("cart") ? JSON.parse(getCookie("cart")) : [];
+  const userData = await BackendAPI.getUserData();
+  let wishlist = userData.wishlist;
+  let cart = userData.cart;
+  let isLoggedIn = userData.isLoggedIn;
+  let hasSeenLoginPrompt = userData.hasSeenLoginPrompt;
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = getCookie("isLoggedIn") === "true";
-  let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
 
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
@@ -164,10 +219,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return escapeMap[match];
     });
   }
-
-  // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
-  // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
-  // upon successful login via the Python backend.
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
@@ -213,12 +264,10 @@ document.addEventListener("DOMContentLoaded", () => {
       window.pendingLoginActionsLogin = [];
     });
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       modal.remove();
-      isLoggedIn = true;
+      isLoggedIn = await BackendAPI.login();
       hasSeenLoginPrompt = true;
-      setCookie("isLoggedIn", "true");
-      setCookie("hasSeenLoginPrompt", "true");
       window.pendingLoginActionsLogin.forEach((action) => action());
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
@@ -247,23 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveState() {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
-    setCookie("cart", JSON.stringify(cart));
-    setCookie("wishlist", JSON.stringify(wishlist));
-
-    if (isLoggedIn) {
-      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
-      fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ cart, wishlist }),
-      }).catch((error) => {
-        console.error("Error syncing state with backend:", error);
-      });
-    }
+    BackendAPI.syncData(cart, wishlist, isLoggedIn);
   }
 
   function renderProducts() {
@@ -279,7 +312,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const safeName = escapeHTML(product.name);
         return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                    <button class="wishlist-btn ${wishlist.includes(product.id) ? "active" : ""}">
+                    <button class="wishlist-btn ${
+                      wishlist.includes(product.id) ? "active" : ""
+                    }">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
@@ -376,16 +411,26 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <option value="iPhone 16">
                                 <option value="iPhone 16 Pro">
                                 <option value="iPhone 16 Pro Max">
+                                <option value="Samsung Galaxy S23">
+                                <option value="Samsung Galaxy S23+">
+                                <option value="Samsung Galaxy S23 Ultra">
+                                <option value="Samsung Galaxy S24">
+                                <option value="Samsung Galaxy S24+">
+                                <option value="Samsung Galaxy S24 Ultra">
+                                <option value="Google Pixel 8">
+                                <option value="Google Pixel 8 Pro">
+                                <option value="Google Pixel 9">
+                                <option value="Google Pixel 9 Pro">
                                 <option value="iPhone 17">
                                 <option value="iPhone 17e">
                                 <option value="iPhone 17 Pro">
                                 <option value="iPhone 17 Pro Max">`
-                                :`<option value="iPad Pro 11">
+                                : `<option value="iPad Pro 11">
                                 <option value="iPad Pro 12.9">
                                 <option value="iPad Air">
                                 <option value="iPad Mini">
                                 <option value="iPad 10th Gen">
-                                <option value="iPad 9th Gen">`
+                                <option value="iPad 9th Gen" />`
                             }
                         </datalist>
                     </div>
@@ -518,15 +563,25 @@ document.addEventListener("DOMContentLoaded", () => {
         .map((item) => {
           const product = products.find((p) => p.id === item.id);
           return `
-                    <div class="cart-item" data-id="${item.id}" data-selection="${escapeHTML(item.selection)}">
-                        <img src="${product.image}" alt="${escapeHTML(product.name)}" class="cart-item-img">
+                    <div class="cart-item" data-id="${
+                      item.id
+                    }" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${
+                          product.image
+                        }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
-                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
+                            <p class="cart-item-name">${escapeHTML(
+                              product.name,
+                            )}</p>
+                            <p class="cart-item-size">${escapeHTML(
+                              item.selection,
+                            )}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${item.quantity}</span>
+                                <span class="qty-display">${
+                                  item.quantity
+                                }</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
@@ -757,10 +812,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <div class="bundle-price-row">
                         <div>
-                            <span class="old-price">₹${(item1.price + item2.price).toFixed(2)}</span>
-                            <span class="bundle-price">₹${bundlePrice.toFixed(2)}</span>
+                            <span class="old-price">₹${(
+                              item1.price + item2.price
+                            ).toFixed(2)}</span>
+                            <span class="bundle-price">₹${bundlePrice.toFixed(
+                              2,
+                            )}</span>
                         </div>
-                        <button class="bundle-btn" data-id1="${item1.id}" data-id2="${item2.id}">Add Bundle</button>
+                        <button class="bundle-btn" data-id1="${
+                          item1.id
+                        }" data-id2="${item2.id}">Add Bundle</button>
                     </div>
                 </div>
             `;
@@ -801,5 +862,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getCookie, setCookie };
+  module.exports = { getCookie, setCookie, BackendAPI };
 }
