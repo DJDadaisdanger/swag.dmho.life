@@ -230,16 +230,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
+      loginQueue.add(onNvm);
+      loginQueue.addLogin(onLogin);
       return;
     }
 
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
+    loginQueue.add(onNvm);
+    loginQueue.addLogin(onLogin);
 
     const modalHtml = `
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
@@ -261,9 +258,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       modal.remove();
       hasSeenLoginPrompt = true;
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      loginQueue.execute();
     });
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
