@@ -105,7 +105,7 @@ const products = [
   },
 ];
 
-const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
 function setCookie(name, value, days = 7) {
   const d = new Date();
@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         </svg>
                     </button>
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${safeName}" class="product-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
                         <div>
@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${safeName}" class="modal-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
                             <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
@@ -569,7 +569,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                       item.id
                     }" data-selection="${escapeHTML(item.selection)}">
                         <img src="${
-                          product.image
+                          escapeHTML(product.image)
                         }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${escapeHTML(
@@ -637,7 +637,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
