@@ -28,6 +28,14 @@ global.localStorage = {
   }
 };
 
+let store = {};
+global.localStorage = {
+  getItem: (key) => store[key] || null,
+  setItem: (key, value) => { store[key] = value.toString(); },
+  removeItem: (key) => { delete store[key]; },
+  clear: () => { store = {}; }
+};
+
 // Require the app file
 const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
 
