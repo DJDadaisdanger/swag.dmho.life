@@ -235,6 +235,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       onNvm();
       return;
     }
+    window.pendingLoginActions = [];
+    window.pendingLoginActionsLogin = [];
+  }
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
@@ -277,6 +280,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
     });
+  }
+
+  function showLoginPrompt(onLogin, onNvm) {
+    if (isLoggedIn || hasSeenLoginPrompt) {
+      if (onNvm) onNvm();
+      return;
+    }
+
+    if (document.getElementById("loginPromptModal")) {
+      // Modal already exists, just attach to it or wait.
+      // Since we're executing back to back, the easiest is to set a global pending action queue.
+      enqueueLoginAction(onLogin, onNvm);
+      return;
+    }
+
+    enqueueLoginAction(onLogin, onNvm);
+    createLoginPromptModal();
   }
 
   function showNotification(message) {
