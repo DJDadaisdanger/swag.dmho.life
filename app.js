@@ -313,6 +313,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <span>${safeMessage}</span>
       </div>
     `;
+    notification.querySelector("span").textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => {
       if (document.body.contains(notification)) {
