@@ -1,14 +1,35 @@
-import { expect, test, beforeEach, describe } from "bun:test";
+import { expect, test, beforeEach, afterEach, describe } from "bun:test";
 
 // Mock globals
 global.window = {};
 global.document = {
-  cookie: "",
+  _cookie: "",
+  get cookie() {
+    return this._cookie;
+  },
+  set cookie(val) {
+    this._cookie = val;
+  },
   addEventListener: () => {}
+};
+global.localStorage = {
+  store: {},
+  getItem(key) {
+    return this.store[key] || null;
+  },
+  setItem(key, value) {
+    this.store[key] = String(value);
+  },
+  removeItem(key) {
+    delete this.store[key];
+  },
+  clear() {
+    this.store = {};
+  }
 };
 
 // Require the app file
-const { setCookie, getCookie } = require("../js/app.js");
+const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
 
 describe("Cookie Utilities", () => {
   beforeEach(() => {
@@ -64,5 +85,77 @@ describe("Cookie Utilities", () => {
   test("getCookie should handle cookie exactly at the beginning", () => {
       global.document.cookie = "first=1; second=2";
       expect(getCookie("first")).toBe("1");
+  });
+});
+
+describe("BackendAPI.getUserData", () => {
+  const { BackendAPI } = require("../js/app.js");
+
+  beforeEach(() => {
+    global.document.cookie = "";
+    global.localStorage.clear();
+  });
+
+  test("should return default empty values when no data is stored", async () => {
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual([]);
+    expect(data.cart).toEqual([]);
+    expect(data.isLoggedIn).toBe(false);
+    expect(data.hasSeenLoginPrompt).toBe(false);
+  });
+
+  test("should load wishlist and cart from localStorage", async () => {
+    const mockWishlist = [{ id: "prod1" }];
+    const mockCart = [{ id: "prod2", qty: 2 }];
+
+    global.localStorage.setItem("wishlist", JSON.stringify(mockWishlist));
+    global.localStorage.setItem("cart", JSON.stringify(mockCart));
+
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual(mockWishlist);
+    expect(data.cart).toEqual(mockCart);
+  });
+
+  test("should fallback to cookies if localStorage returns null", async () => {
+    const mockWishlist = [{ id: "prod3" }];
+    const mockCart = [{ id: "prod4", qty: 1 }];
+
+    // Set cookies manually instead of using setCookie to avoid dependencies in the test setup
+    global.document.cookie = `wishlist=${encodeURIComponent(JSON.stringify(mockWishlist))}; cart=${encodeURIComponent(JSON.stringify(mockCart))}`;
+
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual(mockWishlist);
+    expect(data.cart).toEqual(mockCart);
+  });
+
+  test("should properly read boolean flags from cookies", async () => {
+    global.document.cookie = "isLoggedIn=true; hasSeenLoginPrompt=true";
+
+    const data = await BackendAPI.getUserData();
+    expect(data.isLoggedIn).toBe(true);
+    expect(data.hasSeenLoginPrompt).toBe(true);
+  });
+
+  test("should handle invalid JSON data gracefully", async () => {
+    global.localStorage.setItem("wishlist", "invalid-json");
+    global.localStorage.setItem("cart", "{ bad json");
+
+    // Mock console.error to prevent it from cluttering the test output
+    const originalConsoleError = console.error;
+    let errorCalled = false;
+    console.error = (msg, e) => {
+      errorCalled = true;
+    };
+
+    try {
+      const data = await BackendAPI.getUserData();
+
+      expect(data.wishlist).toEqual([]);
+      expect(data.cart).toEqual([]);
+      expect(errorCalled).toBe(true);
+    } finally {
+      // Restore console.error
+      console.error = originalConsoleError;
+    }
   });
 });

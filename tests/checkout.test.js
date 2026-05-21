@@ -128,4 +128,50 @@ describe("checkout.js", () => {
             domContentLoadedCallback();
         }).not.toThrow();
     });
+
+    test("handles localStorage returning literal 'null'", () => {
+        global.localStorage.getItem.mockReturnValue('null');
+        domContentLoadedCallback();
+
+        expect(mockOrderItems.children.length).toBe(1);
+        expect(mockOrderItems.children[0].tagName).toBe('p');
+        expect(mockOrderItems.children[0].textContent).toBe('Your cart is empty.');
+    });
+
+    test("does not crash if summary-items is missing but summary-total is present", () => {
+        global.document.getElementById = mock((id) => {
+            if (id === 'summary-total') return mockTotalPrice;
+            return null;
+        });
+        const cartData = [{ name: "Item 1", price: 10, quantity: 1 }];
+        global.localStorage.getItem.mockReturnValue(JSON.stringify(cartData));
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+        expect(mockTotalPrice.textContent).toBe('₹10.00');
+    });
+
+    test("does not crash if summary-total is missing but summary-items is present", () => {
+        global.document.getElementById = mock((id) => {
+            if (id === 'summary-items') return mockOrderItems;
+            return null;
+        });
+        const cartData = [{ name: "Item 1", price: 10, quantity: 1 }];
+        global.localStorage.getItem.mockReturnValue(JSON.stringify(cartData));
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+        expect(mockOrderItems.children.length).toBe(1);
+    });
+
+    test("handles empty cart when orderItems is missing", () => {
+        global.document.getElementById = mock(() => null); // Both missing
+        global.localStorage.getItem.mockReturnValue(null);
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+    });
 });
