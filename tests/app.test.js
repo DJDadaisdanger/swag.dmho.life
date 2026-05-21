@@ -1,4 +1,4 @@
-import { expect, test, beforeEach, describe } from "bun:test";
+import { expect, test, beforeEach, afterEach, describe } from "bun:test";
 
 // Mock globals
 global.window = {};
@@ -6,9 +6,13 @@ global.document = {
   cookie: "",
   addEventListener: () => {}
 };
+global.localStorage = {
+  setItem: () => {},
+  getItem: () => null
+};
 
 // Require the app file
-const { setCookie, getCookie } = require("../js/app.js");
+const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
 
 describe("Cookie Utilities", () => {
   beforeEach(() => {
@@ -64,5 +68,39 @@ describe("Cookie Utilities", () => {
   test("getCookie should handle cookie exactly at the beginning", () => {
       global.document.cookie = "first=1; second=2";
       expect(getCookie("first")).toBe("1");
+  });
+});
+
+describe("BackendAPI", () => {
+  let originalFetch;
+  let originalConsoleError;
+
+  beforeEach(() => {
+    originalFetch = global.fetch;
+    originalConsoleError = console.error;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+    console.error = originalConsoleError;
+  });
+
+  test("syncData should catch error and log it to console.error when fetch fails", async () => {
+    const testError = new Error("Network failure");
+    global.fetch = async () => {
+      throw testError;
+    };
+
+    let loggedError = null;
+    let loggedMessage = null;
+    console.error = (msg, err) => {
+      loggedMessage = msg;
+      loggedError = err;
+    };
+
+    await BackendAPI.syncData([], [], true);
+
+    expect(loggedMessage).toBe("Error syncing state with backend:");
+    expect(loggedError).toBe(testError);
   });
 });
