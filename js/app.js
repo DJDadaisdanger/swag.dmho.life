@@ -208,6 +208,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   let activeCategory = "all";
   let activeTag = "all";
 
+  function getSidebarHeaderHTML(title, action) {
+    return `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${action}">&times;</button>
+                </div>`;
+  }
+
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
     return String(str).replace(/[&<>"']/g, function (match) {
