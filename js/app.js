@@ -866,13 +866,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         const product1 = productMap[id1];
         const product2 = productMap[id2];
 
-        const getSelection = (product) => {
-          if (product.category === "Phone Covers") return "iPhone 15";
-          if (product.category === "iPad Covers") return "iPad Pro 11";
-          if (product.category !== "Mugs") return "M";
-          return "N/A";
-        };
-
         addToCart(id1, getSelection(product1), 1);
         addToCart(id2, getSelection(product2), 1);
 
