@@ -3,12 +3,49 @@ import { expect, test, beforeEach, describe } from "bun:test";
 // Mock globals
 global.window = {};
 global.document = {
-  cookie: "",
+  _cookie: "",
+  get cookie() {
+    return this._cookie;
+  },
+  set cookie(val) {
+    this._cookie = val;
+  },
   addEventListener: () => {}
 };
 
 // Require the app file
-const { setCookie, getCookie } = require("../js/app.js");
+const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
+
+describe("BackendAPI", () => {
+  beforeEach(() => {
+    // Reset cookie string before each test
+    global.document._cookie = "";
+  });
+
+  test("login should set isLoggedIn and hasSeenLoginPrompt cookies", async () => {
+    // Intercept document.cookie setter to accumulate all cookies set during the test
+    let cookieStore = "";
+    const originalSetter = Object.getOwnPropertyDescriptor(global.document, 'cookie').set;
+    Object.defineProperty(global.document, 'cookie', {
+      set: function(val) {
+        cookieStore += (cookieStore ? "; " : "") + val;
+      },
+      configurable: true
+    });
+
+    const result = await BackendAPI.login();
+
+    // Restore original setter
+    Object.defineProperty(global.document, 'cookie', {
+      set: originalSetter,
+      configurable: true
+    });
+
+    expect(result).toBe(true);
+    expect(cookieStore).toContain("isLoggedIn=true");
+    expect(cookieStore).toContain("hasSeenLoginPrompt=true");
+  });
+});
 
 describe("Cookie Utilities", () => {
   beforeEach(() => {
