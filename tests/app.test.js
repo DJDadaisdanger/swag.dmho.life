@@ -3,7 +3,13 @@ import { expect, test, beforeEach, afterEach, describe } from "bun:test";
 // Mock globals
 global.window = {};
 global.document = {
-  cookie: "",
+  _cookie: "",
+  get cookie() {
+    return this._cookie;
+  },
+  set cookie(val) {
+    this._cookie = val;
+  },
   addEventListener: () => {}
 };
 global.localStorage = {
