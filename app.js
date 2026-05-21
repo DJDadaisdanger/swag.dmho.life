@@ -389,6 +389,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  function executeWithLoginPrompt(action) {
+    if (cart.length === 0 && wishlist.length === 0) {
+      showLoginPrompt(action, action);
+    } else {
+      action();
+    }
+  }
+
   function toggleWishlist(productId, btn) {
     const index = wishlist.indexOf(productId);
 
@@ -405,11 +413,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderWishlist();
     };
 
-    if (index === -1 && wishlist.length === 0 && cart.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
   }
 
   function openProductModal(productId) {
@@ -568,11 +572,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showNotification("Added to cart");
     };
 
-    if (cart.length === 0 && wishlist.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
   }
 
   function renderSidebar(options) {
