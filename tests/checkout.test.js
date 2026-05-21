@@ -1,125 +1,177 @@
-import { expect, test, beforeEach, describe } from "bun:test";
+import { expect, test, beforeEach, describe, mock } from "bun:test";
 
 let domContentLoadedCallback = null;
-let mockElements = {};
-let mockLocalStorage = {};
 
-function createElementMock(tag) {
-  return {
-    tag,
-    textContent: '',
-    children: [],
-    classList: {
-      classes: new Set(),
-      add: function(cls) { this.classes.add(cls); }
-    },
-    appendChild: function(child) { this.children.push(child); },
-    listeners: {},
-    addEventListener: function(evt, cb) {
-      this.listeners[evt] = cb;
+class MockElement {
+    constructor(tagName) {
+        this.tagName = tagName;
+        this.classList = {
+            add: mock()
+        };
+        this.children = [];
+        this.textContent = '';
+        this.listeners = {};
     }
-  };
+    appendChild(child) {
+        this.children.push(child);
+    }
+    addEventListener(event, callback) {
+        this.listeners[event] = callback;
+    }
+    click(e) {
+        if (this.listeners['click']) {
+            this.listeners['click'](e || { preventDefault: () => {} });
+        }
+    }
 }
 
 global.window = {
-  location: { href: '' }
-};
-
-global.localStorage = {
-  getItem: (key) => mockLocalStorage[key] || null,
-  setItem: (key, value) => { mockLocalStorage[key] = value; }
+    location: { href: '' }
 };
 
 global.document = {
-  addEventListener: (event, callback) => {
-    if (event === 'DOMContentLoaded') {
-      domContentLoadedCallback = callback;
-    }
-  },
-  getElementById: (id) => mockElements[id] || null,
-  querySelector: (selector) => mockElements[selector] || null,
-  createElement: createElementMock
+    addEventListener: (event, callback) => {
+        if (event === 'DOMContentLoaded') {
+            domContentLoadedCallback = callback;
+        }
+    },
+    createElement: (tagName) => new MockElement(tagName),
+    getElementById: () => null,
+    querySelector: () => null,
 };
 
-// Require the checkout file
+global.localStorage = {
+    getItem: mock(() => null)
+};
+
+// Require the file
 require("../js/checkout.js");
 
-describe("Checkout Logic", () => {
-  beforeEach(() => {
-    mockElements = {
-      'summary-items': createElementMock('div'),
-      'summary-total': createElementMock('span'),
-      '.back-to-shop-btn': createElementMock('button')
-    };
-    mockLocalStorage = {};
-    global.window.location.href = '';
-  });
+describe("checkout.js", () => {
+    let mockOrderItems;
+    let mockTotalPrice;
+    let mockBackBtn;
 
-  test("should render empty message when cart is empty", () => {
-    mockLocalStorage['cart'] = JSON.stringify([]);
-    domContentLoadedCallback();
+    beforeEach(() => {
+        mockOrderItems = new MockElement('div');
+        mockTotalPrice = new MockElement('span');
+        mockBackBtn = new MockElement('button');
 
-    const summaryItems = mockElements['summary-items'];
-    expect(summaryItems.children.length).toBe(1);
-    expect(summaryItems.children[0].textContent).toBe('Your cart is empty.');
-  });
+        global.window.location.href = '';
+        global.document.getElementById = mock((id) => {
+            if (id === 'summary-items') return mockOrderItems;
+            if (id === 'summary-total') return mockTotalPrice;
+            return null;
+        });
+        global.document.querySelector = mock((selector) => {
+            if (selector === '.back-to-shop-btn') return mockBackBtn;
+            return null;
+        });
+        global.localStorage.getItem = mock(() => null);
+    });
 
-  test("should render empty message when cart is not in localStorage", () => {
-    // mockLocalStorage['cart'] is undefined
-    domContentLoadedCallback();
+    test("handles empty cart", () => {
+        global.localStorage.getItem.mockReturnValue(null);
+        domContentLoadedCallback();
 
-    const summaryItems = mockElements['summary-items'];
-    expect(summaryItems.children.length).toBe(1);
-    expect(summaryItems.children[0].textContent).toBe('Your cart is empty.');
-  });
+        expect(global.localStorage.getItem).toHaveBeenCalledWith('cart');
+        expect(mockOrderItems.children.length).toBe(1);
+        expect(mockOrderItems.children[0].tagName).toBe('p');
+        expect(mockOrderItems.children[0].textContent).toBe('Your cart is empty.');
+    });
 
-  test("should render items and total when cart has items", () => {
-    mockLocalStorage['cart'] = JSON.stringify([
-      { name: 'Item 1', quantity: 2, price: 50 },
-      { name: 'Item 2', quantity: 1, price: 100 }
-    ]);
-    domContentLoadedCallback();
+    test("handles cart with items", () => {
+        const cartData = [
+            { name: "Item 1", price: 10, quantity: 2 },
+            { name: "Item 2", price: 5, quantity: 1 }
+        ];
+        global.localStorage.getItem.mockReturnValue(JSON.stringify(cartData));
 
-    const summaryItems = mockElements['summary-items'];
-    const summaryTotal = mockElements['summary-total'];
+        domContentLoadedCallback();
 
-    expect(summaryItems.children.length).toBe(2);
+        expect(mockOrderItems.children.length).toBe(2);
 
-    const item1 = summaryItems.children[0];
-    expect(item1.classList.classes.has('order-item')).toBe(true);
-    expect(item1.classList.classes.has('summary-item')).toBe(true);
-    expect(item1.children[0].textContent).toBe('Item 1 x 2');
-    expect(item1.children[1].textContent).toBe('₹100.00');
+        // Check first item
+        const item1 = mockOrderItems.children[0];
+        expect(item1.tagName).toBe('div');
+        expect(item1.classList.add).toHaveBeenCalledWith('order-item');
+        expect(item1.classList.add).toHaveBeenCalledWith('summary-item');
+        expect(item1.children.length).toBe(2); // nameSpan, priceSpan
+        expect(item1.children[0].textContent).toBe('Item 1 x 2');
+        expect(item1.children[1].textContent).toBe('₹20.00'); // 10 * 2
 
-    const item2 = summaryItems.children[1];
-    expect(item2.children[0].textContent).toBe('Item 2 x 1');
-    expect(item2.children[1].textContent).toBe('₹100.00');
+        // Check second item
+        const item2 = mockOrderItems.children[1];
+        expect(item2.children[0].textContent).toBe('Item 2 x 1');
+        expect(item2.children[1].textContent).toBe('₹5.00'); // 5 * 1
 
-    expect(summaryTotal.textContent).toBe('₹200.00');
-  });
+        expect(mockTotalPrice.textContent).toBe('₹25.00'); // 20 + 5
+    });
 
-  test("should setup back to shop button listener", () => {
-    domContentLoadedCallback();
+    test("back to shop button works", () => {
+        global.localStorage.getItem.mockReturnValue(null);
+        domContentLoadedCallback();
 
-    const backBtn = mockElements['.back-to-shop-btn'];
-    expect(backBtn.listeners['click']).toBeDefined();
+        let preventDefaultCalled = false;
+        mockBackBtn.click({ preventDefault: () => { preventDefaultCalled = true; } });
 
-    let preventDefaultCalled = false;
-    const mockEvent = {
-      preventDefault: () => { preventDefaultCalled = true; }
-    };
+        expect(preventDefaultCalled).toBe(true);
+        expect(global.window.location.href).toBe('index.html');
+    });
 
-    backBtn.listeners['click'](mockEvent);
+    test("does not crash if elements are missing", () => {
+        global.document.getElementById.mockReturnValue(null);
+        global.document.querySelector.mockReturnValue(null);
 
-    expect(preventDefaultCalled).toBe(true);
-    expect(global.window.location.href).toBe('index.html');
-  });
+        // Should not throw
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+    });
 
-  test("should handle missing DOM elements safely", () => {
-    mockElements = {}; // No DOM elements found
-    mockLocalStorage['cart'] = JSON.stringify([{ name: 'Item 1', quantity: 1, price: 50 }]);
+    test("handles localStorage returning literal 'null'", () => {
+        global.localStorage.getItem.mockReturnValue('null');
+        domContentLoadedCallback();
 
-    // This shouldn't throw an error
-    expect(() => domContentLoadedCallback()).not.toThrow();
-  });
+        expect(mockOrderItems.children.length).toBe(1);
+        expect(mockOrderItems.children[0].tagName).toBe('p');
+        expect(mockOrderItems.children[0].textContent).toBe('Your cart is empty.');
+    });
+
+    test("does not crash if summary-items is missing but summary-total is present", () => {
+        global.document.getElementById = mock((id) => {
+            if (id === 'summary-total') return mockTotalPrice;
+            return null;
+        });
+        const cartData = [{ name: "Item 1", price: 10, quantity: 1 }];
+        global.localStorage.getItem.mockReturnValue(JSON.stringify(cartData));
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+        expect(mockTotalPrice.textContent).toBe('₹10.00');
+    });
+
+    test("does not crash if summary-total is missing but summary-items is present", () => {
+        global.document.getElementById = mock((id) => {
+            if (id === 'summary-items') return mockOrderItems;
+            return null;
+        });
+        const cartData = [{ name: "Item 1", price: 10, quantity: 1 }];
+        global.localStorage.getItem.mockReturnValue(JSON.stringify(cartData));
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+        expect(mockOrderItems.children.length).toBe(1);
+    });
+
+    test("handles empty cart when orderItems is missing", () => {
+        global.document.getElementById = mock(() => null); // Both missing
+        global.localStorage.getItem.mockReturnValue(null);
+
+        expect(() => {
+            domContentLoadedCallback();
+        }).not.toThrow();
+    });
 });
