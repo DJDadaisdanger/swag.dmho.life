@@ -19,4 +19,6 @@
 - **Vulnerability**: DOM-based XSS via `innerHTML` in `js/checkout.js`.
 - **Learning**: Even when escaping input, using `innerHTML` to render user-controlled data is risky and less secure than using `textContent` or manual DOM node construction.
 - **Prevention**: Always prefer `textContent` and `document.createElement` when rendering dynamic content retrieved from `localStorage` or other user-controlled sources.
-**Learning:** The codebase maintains duplicate logic in the root `app.js` and `js/app.js` (e.g., UI component functions like `showNotification`). Modifications to shared logic must be carefully applied to both files independently, followed by regenerating their respective minified assets (`app.min.js` and `js/app.min.js`).
+### DOM-based XSS in innerHTML
+- **Vulnerability:** Interpolating untrusted/un-escaped variables directly into `innerHTML` allows for Cross-Site Scripting (XSS).
+- **Solution:** Always escape dynamic values using a utility like `escapeHTML` prior to interpolation, or use safer properties like `textContent`.

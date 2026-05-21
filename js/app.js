@@ -105,9 +105,11 @@ const products = [
   },
 ];
 
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
 function setCookie(name, value, days = 7) {
   const d = new Date();
-  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie =
     name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
@@ -206,6 +208,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   let activeCategory = "all";
   let activeTag = "all";
 
+  function getSidebarHeaderHTML(title, action) {
+    return `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${action}">&times;</button>
+                </div>`;
+  }
+
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
     return String(str).replace(/[&<>"']/g, function (match) {
@@ -225,19 +235,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       onNvm();
       return;
     }
+    window.pendingLoginActions = [];
+    window.pendingLoginActionsLogin = [];
+  }
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
+      loginQueue.add(onNvm);
+      loginQueue.addLogin(onLogin);
       return;
     }
 
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
+    loginQueue.add(onNvm);
+    loginQueue.addLogin(onLogin);
 
     const modalHtml = `
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
@@ -259,9 +269,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       modal.remove();
       hasSeenLoginPrompt = true;
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      loginQueue.execute();
     });
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -274,9 +282,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function showLoginPrompt(onLogin, onNvm) {
+    if (isLoggedIn || hasSeenLoginPrompt) {
+      if (onNvm) onNvm();
+      return;
+    }
+
+    if (document.getElementById("loginPromptModal")) {
+      // Modal already exists, just attach to it or wait.
+      // Since we're executing back to back, the easiest is to set a global pending action queue.
+      enqueueLoginAction(onLogin, onNvm);
+      return;
+    }
+
+    enqueueLoginAction(onLogin, onNvm);
+    createLoginPromptModal();
+  }
+
   function showNotification(message) {
     const notification = document.createElement("div");
     notification.className = "success-message";
+    const safeMessage = escapeHTML(message);
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -284,7 +310,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <circle cx="20" cy="21" r="1"></circle>
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
         </svg>
-        <span>${escapeHTML(message)}</span>
+        <span>${safeMessage}</span>
       </div>
     `;
     document.body.appendChild(notification);
@@ -307,20 +333,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       return categoryMatch && tagMatch;
     });
 
+    const wishlistSet = new Set(wishlist);
+
     productsGrid.innerHTML = filteredProducts
       .map((product) => {
         const safeName = escapeHTML(product.name);
         return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <button class="wishlist-btn ${
-                      wishlist.includes(product.id) ? "active" : ""
+                      wishlistSet.has(product.id) ? "active" : ""
                     }">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                     </button>
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${safeName}" class="product-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
                         <div>
@@ -366,10 +394,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const action = () => {
       if (index > -1) {
         wishlist.splice(index, 1);
-        btn.classList.remove("active");
+        if (btn) btn.classList.remove("active");
       } else {
         wishlist.push(productId);
-        btn.classList.add("active");
+        if (btn) btn.classList.add("active");
       }
       saveState();
       updateWishlistBadge();
@@ -384,7 +412,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -459,7 +487,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${safeName}" class="modal-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
                             <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
@@ -536,7 +564,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveState();
       updateCartBadge();
       renderCart();
-      showNotification('Added to cart');
+      showNotification("Added to cart");
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -546,42 +574,53 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function renderCart() {
-    cartSidebar.innerHTML = "";
-    if (cart.length === 0) {
-      cartSidebar.innerHTML = `
+  function renderSidebar(options) {
+    const { element, title, closeAction, emptyMessage, itemsHTML, footerHTML } =
+      options;
+    element.innerHTML = `
                 <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${closeAction}">&times;</button>
                 </div>
-                <div class="sidebar-empty">
-                    <p>Your cart is empty</p>
-                </div>
+                ${
+                  itemsHTML
+                    ? `<div class="sidebar-items">${itemsHTML}</div>`
+                    : `<div class="sidebar-empty">
+                    <p>${emptyMessage}</p>
+                </div>`
+                }
+                ${
+                  footerHTML
+                    ? `<div class="sidebar-footer">
+                    ${footerHTML}
+                </div>`
+                    : ""
+                }
             `;
-    } else {
-      const cartItemsHTML = cart
+  }
+
+  function renderCart() {
+    let itemsHTML = null;
+    let footerHTML = null;
+
+    if (cart.length > 0) {
+      itemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap[item.id];
           return `
                     <div class="cart-item" data-id="${
                       item.id
                     }" data-selection="${escapeHTML(item.selection)}">
                         <img src="${
-                          product.image
+                          escapeHTML(product.image)
                         }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${escapeHTML(
-                              product.name,
-                            )}</p>
-                            <p class="cart-item-size">${escapeHTML(
-                              item.selection,
-                            )}</p>
+                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
+                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${
-                                  item.quantity
-                                }</span>
+                                <span class="qty-display">${item.quantity}</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
@@ -592,50 +631,40 @@ document.addEventListener("DOMContentLoaded", async () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-items">${cartItemsHTML}</div>
-                <div class="sidebar-footer">
+      footerHTML = `
                     <div class="cart-total">
                         <span>Total</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
-                </div>
-            `;
+                `;
     }
+
+    renderSidebar({
+      element: cartSidebar,
+      title: "Your Cart",
+      closeAction: "close-cart",
+      emptyMessage: "Your cart is empty",
+      itemsHTML,
+      footerHTML,
+    });
   }
 
   function renderWishlist() {
-    wishlistSidebar.innerHTML = "";
-    if (wishlist.length === 0) {
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-empty">
-                    <p>Your wishlist is empty</p>
-                </div>
-                 <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
-    } else {
-      const wishlistItemsHTML = wishlist
+    let itemsHTML = null;
+
+    if (wishlist.length > 0) {
+      itemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap[productId];
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
@@ -645,17 +674,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 `;
         })
         .join("");
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-items">${wishlistItemsHTML}</div>
-                <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
     }
+
+    renderSidebar({
+      element: wishlistSidebar,
+      title: "Your Wishlist",
+      closeAction: "close-wishlist",
+      emptyMessage: "Your wishlist is empty",
+      itemsHTML,
+      footerHTML: '<button class="checkout-btn">Sign in to save</button>',
+    });
   }
 
   cartBtn.addEventListener("click", () => {
@@ -720,9 +748,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const productId = parseInt(cartItem.dataset.id);
       toggleWishlist(
         productId,
-        document.querySelector(
-          `.product-card[data-id="${productId}"] .wishlist-btn`,
-        ),
+        document.getElementById(`wishlist-btn-${productId}`),
       );
     }
   });
@@ -795,15 +821,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
         const safeName1 = escapeHTML(item1.name);
         const safeName2 = escapeHTML(item2.name);
+        const safeImage1 = escapeHTML(item1.image);
+        const safeImage2 = escapeHTML(item2.image);
 
         return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
                         </div>
                     </div>
                     <div>
@@ -834,8 +862,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap[id1];
+        const product2 = productMap[id2];
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
