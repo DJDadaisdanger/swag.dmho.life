@@ -1,4 +1,4 @@
-import { expect, test, beforeEach, describe } from "bun:test";
+import { expect, test, beforeEach, afterEach, describe } from "bun:test";
 
 // Mock globals
 global.window = {};
@@ -23,7 +23,7 @@ global.localStorage = {
 };
 
 // Require the app file
-const { setCookie, getCookie } = require("../js/app.js");
+const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
 
 describe("Cookie Utilities", () => {
   beforeEach(() => {
