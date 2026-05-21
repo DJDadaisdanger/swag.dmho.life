@@ -105,6 +105,8 @@ const products = [
   },
 ];
 
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
 function setCookie(name, value, days = 7) {
   const d = new Date();
   d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -384,7 +386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -561,12 +563,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       const cartItemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap[item.id];
           return `
                     <div class="cart-item" data-id="${
                       item.id
                     }" data-selection="${escapeHTML(item.selection)}">
-                        <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="cart-item-img">
+                        <img src="${
+                          escapeHTML(product.image)
+                        }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${escapeHTML(
                               product.name,
@@ -590,7 +594,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
@@ -629,7 +633,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       const wishlistItemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap[productId];
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
@@ -793,15 +797,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
         const safeName1 = escapeHTML(item1.name);
         const safeName2 = escapeHTML(item2.name);
+        const safeImage1 = escapeHTML(item1.image);
+        const safeImage2 = escapeHTML(item2.image);
 
         return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
                         </div>
                     </div>
                     <div>
@@ -832,8 +838,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap[id1];
+        const product2 = productMap[id2];
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
