@@ -19,8 +19,6 @@
 - **Vulnerability**: DOM-based XSS via `innerHTML` in `js/checkout.js`.
 - **Learning**: Even when escaping input, using `innerHTML` to render user-controlled data is risky and less secure than using `textContent` or manual DOM node construction.
 - **Prevention**: Always prefer `textContent` and `document.createElement` when rendering dynamic content retrieved from `localStorage` or other user-controlled sources.
-
-## 2026-04-17 - DOM-based XSS in showNotification
-**Vulnerability:** A message string in `showNotification` was directly embedded into HTML via `innerHTML` without being escaped, allowing for potential DOM-based XSS if the message originates from an untrusted source.
-**Learning:** Functions that render UI notifications often accept dynamic strings. Even if the current usage is benign, leaving it unescaped introduces a latent vulnerability that could be exploited if the notification system is later used to display user-controlled or external data.
-**Prevention:** Consistently apply HTML escaping (e.g., using `escapeHTML`) to all dynamic text content injected via `innerHTML`, or use `textContent` when possible.
+### DOM-based XSS in innerHTML
+- **Vulnerability:** Interpolating untrusted/un-escaped variables directly into `innerHTML` allows for Cross-Site Scripting (XSS).
+- **Solution:** Always escape dynamic values using a utility like `escapeHTML` prior to interpolation, or use safer properties like `textContent`.
