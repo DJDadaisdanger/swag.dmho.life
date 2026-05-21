@@ -309,6 +309,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       return categoryMatch && tagMatch;
     });
 
+    const wishlistSet = new Set(wishlist);
+
     productsGrid.innerHTML = filteredProducts
       .map((product) => {
         const safeName = escapeHTML(product.name);
