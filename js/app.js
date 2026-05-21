@@ -105,7 +105,7 @@ const products = [
   },
 ];
 
-const productMap = Object.fromEntries(products.map(p => [p.id, p]));
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
 function setCookie(name, value, days = 7) {
   const d = new Date();
@@ -131,7 +131,61 @@ function getCookie(name) {
   return "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const BackendAPI = {
+  async getUserData() {
+    let wishlist = [];
+    let cart = [];
+    let isLoggedIn = getCookie("isLoggedIn") === "true";
+    let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
+
+    try {
+      const storedWishlist = localStorage.getItem('wishlist') || getCookie("wishlist");
+      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
+
+      const storedCart = localStorage.getItem('cart') || getCookie("cart");
+      if (storedCart) cart = JSON.parse(storedCart);
+    } catch (e) {
+      console.error("Error parsing stored data", e);
+    }
+
+    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt };
+  },
+
+  async login() {
+    // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
+    // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
+    // upon successful login via the Python backend.
+    setCookie("isLoggedIn", "true");
+    setCookie("hasSeenLoginPrompt", "true");
+    return true;
+  },
+
+  async syncData(cart, wishlist, isLoggedIn) {
+    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    setCookie("cart", JSON.stringify(cart));
+    setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      try {
+        await fetch("/api/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ cart, wishlist }),
+        });
+      } catch (error) {
+        console.error("Error syncing state with backend:", error);
+      }
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -146,12 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = getCookie("wishlist") ? JSON.parse(getCookie("wishlist")) : [];
-  let cart = getCookie("cart") ? JSON.parse(getCookie("cart")) : [];
+  const userData = await BackendAPI.getUserData();
+  let wishlist = userData.wishlist;
+  let cart = userData.cart;
+  let isLoggedIn = userData.isLoggedIn;
+  let hasSeenLoginPrompt = userData.hasSeenLoginPrompt;
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = getCookie("isLoggedIn") === "true";
-  let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
 
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
@@ -166,10 +221,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return escapeMap[match];
     });
   }
-
-  // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
-  // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
-  // upon successful login via the Python backend.
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
@@ -215,12 +266,10 @@ document.addEventListener("DOMContentLoaded", () => {
       window.pendingLoginActionsLogin = [];
     });
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       modal.remove();
-      isLoggedIn = true;
+      isLoggedIn = await BackendAPI.login();
       hasSeenLoginPrompt = true;
-      setCookie("isLoggedIn", "true");
-      setCookie("hasSeenLoginPrompt", "true");
       window.pendingLoginActionsLogin.forEach((action) => action());
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
@@ -249,23 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveState() {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
-    setCookie("cart", JSON.stringify(cart));
-    setCookie("wishlist", JSON.stringify(wishlist));
-
-    if (isLoggedIn) {
-      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
-      fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ cart, wishlist }),
-      }).catch((error) => {
-        console.error("Error syncing state with backend:", error);
-      });
-    }
+    BackendAPI.syncData(cart, wishlist, isLoggedIn);
   }
 
   function renderProducts() {
@@ -289,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </svg>
                     </button>
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${safeName}" class="product-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
                         <div>
@@ -389,7 +422,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <option value="Google Pixel 8">
                                 <option value="Google Pixel 8 Pro">
                                 <option value="Google Pixel 9">
-                                <option value="Google Pixel 9 Pro" />`
+                                <option value="Google Pixel 9 Pro">
+                                <option value="iPhone 17">
+                                <option value="iPhone 17e">
+                                <option value="iPhone 17 Pro">
+                                <option value="iPhone 17 Pro Max">`
                                 : `<option value="iPad Pro 11">
                                 <option value="iPad Pro 12.9">
                                 <option value="iPad Air">
@@ -424,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${safeName}" class="modal-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
                             <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
@@ -532,7 +569,7 @@ document.addEventListener("DOMContentLoaded", () => {
                       item.id
                     }" data-selection="${escapeHTML(item.selection)}">
                         <img src="${
-                          product.image
+                          escapeHTML(product.image)
                         }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${escapeHTML(
@@ -600,7 +637,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
@@ -760,15 +797,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
         const safeName1 = escapeHTML(item1.name);
         const safeName2 = escapeHTML(item2.name);
+        const safeImage1 = escapeHTML(item1.image);
+        const safeImage2 = escapeHTML(item2.image);
 
         return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
                         </div>
                     </div>
                     <div>
@@ -827,5 +866,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getCookie, setCookie };
+  module.exports = { getCookie, setCookie, BackendAPI };
 }
