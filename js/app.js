@@ -105,9 +105,11 @@ const products = [
   },
 ];
 
+const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
 function setCookie(name, value, days = 7) {
   const d = new Date();
-  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie =
     name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
@@ -129,7 +131,61 @@ function getCookie(name) {
   return "";
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const BackendAPI = {
+  async getUserData() {
+    let wishlist = [];
+    let cart = [];
+    let isLoggedIn = getCookie("isLoggedIn") === "true";
+    let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
+
+    try {
+      const storedWishlist = localStorage.getItem('wishlist') || getCookie("wishlist");
+      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
+
+      const storedCart = localStorage.getItem('cart') || getCookie("cart");
+      if (storedCart) cart = JSON.parse(storedCart);
+    } catch (e) {
+      console.error("Error parsing stored data", e);
+    }
+
+    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt };
+  },
+
+  async login() {
+    // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
+    // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
+    // upon successful login via the Python backend.
+    setCookie("isLoggedIn", "true");
+    setCookie("hasSeenLoginPrompt", "true");
+    return true;
+  },
+
+  async syncData(cart, wishlist, isLoggedIn) {
+    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
+    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
+    localStorage.setItem("cart", JSON.stringify(cart));
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    setCookie("cart", JSON.stringify(cart));
+    setCookie("wishlist", JSON.stringify(wishlist));
+
+    if (isLoggedIn) {
+      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
+      try {
+        await fetch("/api/sync", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ cart, wishlist }),
+        });
+      } catch (error) {
+        console.error("Error syncing state with backend:", error);
+      }
+    }
+  }
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -144,12 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const mobileMenuBtn = document.getElementById("mobileMenuBtn");
   const navLinks = document.getElementById("navLinks");
 
-  let wishlist = getCookie("wishlist") ? JSON.parse(getCookie("wishlist")) : [];
-  let cart = getCookie("cart") ? JSON.parse(getCookie("cart")) : [];
+  const userData = await BackendAPI.getUserData();
+  let wishlist = userData.wishlist;
+  let cart = userData.cart;
+  let isLoggedIn = userData.isLoggedIn;
+  let hasSeenLoginPrompt = userData.hasSeenLoginPrompt;
   let activeCategory = "all";
   let activeTag = "all";
-  let isLoggedIn = getCookie("isLoggedIn") === "true";
-  let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
 
   function getSidebarHeaderHTML(title, action) {
     return `
@@ -173,10 +230,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
-  // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
-  // upon successful login via the Python backend.
-
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
       onNvm();
@@ -185,16 +238,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
+      loginQueue.add(onNvm);
+      loginQueue.addLogin(onLogin);
       return;
     }
 
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
+    loginQueue.add(onNvm);
+    loginQueue.addLogin(onLogin);
 
     const modalHtml = `
             <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
@@ -216,17 +266,13 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.remove();
       hasSeenLoginPrompt = true;
       setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
+      loginQueue.execute();
     });
 
-    document.getElementById("loginBtn").addEventListener("click", () => {
+    document.getElementById("loginBtn").addEventListener("click", async () => {
       modal.remove();
-      isLoggedIn = true;
+      isLoggedIn = await BackendAPI.login();
       hasSeenLoginPrompt = true;
-      setCookie("isLoggedIn", "true");
-      setCookie("hasSeenLoginPrompt", "true");
       window.pendingLoginActionsLogin.forEach((action) => action());
       window.pendingLoginActions = [];
       window.pendingLoginActionsLogin = [];
@@ -236,6 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showNotification(message) {
     const notification = document.createElement("div");
     notification.className = "success-message";
+    const safeMessage = escapeHTML(message);
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -243,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <circle cx="20" cy="21" r="1"></circle>
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
         </svg>
-        <span>${message}</span>
+        <span>${safeMessage}</span>
       </div>
     `;
     document.body.appendChild(notification);
@@ -255,23 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function saveState() {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
-    setCookie("cart", JSON.stringify(cart));
-    setCookie("wishlist", JSON.stringify(wishlist));
-
-    if (isLoggedIn) {
-      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
-      fetch("/api/sync", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ cart, wishlist }),
-      }).catch((error) => {
-        console.error("Error syncing state with backend:", error);
-      });
-    }
+    BackendAPI.syncData(cart, wishlist, isLoggedIn);
   }
 
   function renderProducts() {
@@ -282,20 +313,22 @@ document.addEventListener("DOMContentLoaded", () => {
       return categoryMatch && tagMatch;
     });
 
+    const wishlistSet = new Set(wishlist);
+
     productsGrid.innerHTML = filteredProducts
       .map((product) => {
         const safeName = escapeHTML(product.name);
         return `
                 <div class="product-card" data-id="${product.id}" data-action="open-modal">
                     <button class="wishlist-btn ${
-                      wishlist.includes(product.id) ? "active" : ""
+                      wishlistSet.has(product.id) ? "active" : ""
                     }">
                         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
                     </button>
                     <div class="product-image-wrapper">
-                        <img src="${product.image}" alt="${safeName}" class="product-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="product-image">
                     </div>
                     <div class="product-info">
                         <div>
@@ -341,10 +374,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const action = () => {
       if (index > -1) {
         wishlist.splice(index, 1);
-        btn.classList.remove("active");
+        if (btn) btn.classList.remove("active");
       } else {
         wishlist.push(productId);
-        btn.classList.add("active");
+        if (btn) btn.classList.add("active");
       }
       saveState();
       updateWishlistBadge();
@@ -359,7 +392,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -395,7 +428,11 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <option value="Google Pixel 8">
                                 <option value="Google Pixel 8 Pro">
                                 <option value="Google Pixel 9">
-                                <option value="Google Pixel 9 Pro" />`
+                                <option value="Google Pixel 9 Pro">
+                                <option value="iPhone 17">
+                                <option value="iPhone 17e">
+                                <option value="iPhone 17 Pro">
+                                <option value="iPhone 17 Pro Max">`
                                 : `<option value="iPad Pro 11">
                                 <option value="iPad Pro 12.9">
                                 <option value="iPad Air">
@@ -430,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${product.image}" alt="${safeName}" class="modal-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image">
                         <div class="modal-details">
                             <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
@@ -507,7 +544,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveState();
       updateCartBadge();
       renderCart();
-      showNotification('Added to cart');
+      showNotification("Added to cart");
     };
 
     if (cart.length === 0 && wishlist.length === 0) {
@@ -517,39 +554,53 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function renderCart() {
-    cartSidebar.innerHTML = "";
-    if (cart.length === 0) {
-      cartSidebar.innerHTML = `
-${getSidebarHeaderHTML('Your Cart', 'close-cart')}
-                <div class="sidebar-empty">
-                    <p>Your cart is empty</p>
+  function renderSidebar(options) {
+    const { element, title, closeAction, emptyMessage, itemsHTML, footerHTML } =
+      options;
+    element.innerHTML = `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${closeAction}">&times;</button>
                 </div>
+                ${
+                  itemsHTML
+                    ? `<div class="sidebar-items">${itemsHTML}</div>`
+                    : `<div class="sidebar-empty">
+                    <p>${emptyMessage}</p>
+                </div>`
+                }
+                ${
+                  footerHTML
+                    ? `<div class="sidebar-footer">
+                    ${footerHTML}
+                </div>`
+                    : ""
+                }
             `;
-    } else {
-      const cartItemsHTML = cart
+  }
+
+  function renderCart() {
+    let itemsHTML = null;
+    let footerHTML = null;
+
+    if (cart.length > 0) {
+      itemsHTML = cart
         .map((item) => {
-          const product = products.find((p) => p.id === item.id);
+          const product = productMap[item.id];
           return `
                     <div class="cart-item" data-id="${
                       item.id
                     }" data-selection="${escapeHTML(item.selection)}">
                         <img src="${
-                          product.image
+                          escapeHTML(product.image)
                         }" alt="${escapeHTML(product.name)}" class="cart-item-img">
                         <div class="cart-item-details">
-                            <p class="cart-item-name">${escapeHTML(
-                              product.name,
-                            )}</p>
-                            <p class="cart-item-size">${escapeHTML(
-                              item.selection,
-                            )}</p>
+                            <p class="cart-item-name">${escapeHTML(product.name)}</p>
+                            <p class="cart-item-size">${escapeHTML(item.selection)}</p>
                             <p class="cart-item-price">₹${product.price}</p>
                             <div class="cart-item-actions">
                                 <button class="qty-btn" data-action="decrease-cart-qty">-</button>
-                                <span class="qty-display">${
-                                  item.quantity
-                                }</span>
+                                <span class="qty-display">${item.quantity}</span>
                                 <button class="qty-btn" data-action="increase-cart-qty">+</button>
                                 <button class="remove-btn" data-action="remove-from-cart">Remove</button>
                             </div>
@@ -560,44 +611,40 @@ ${getSidebarHeaderHTML('Your Cart', 'close-cart')}
         .join("");
 
       const total = cart.reduce((acc, item) => {
-        const product = products.find((p) => p.id === item.id);
+        const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
-      cartSidebar.innerHTML = `
-${getSidebarHeaderHTML('Your Cart', 'close-cart')}
-                <div class="sidebar-items">${cartItemsHTML}</div>
-                <div class="sidebar-footer">
+      footerHTML = `
                     <div class="cart-total">
                         <span>Total</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
-                </div>
-            `;
+                `;
     }
+
+    renderSidebar({
+      element: cartSidebar,
+      title: "Your Cart",
+      closeAction: "close-cart",
+      emptyMessage: "Your cart is empty",
+      itemsHTML,
+      footerHTML,
+    });
   }
 
   function renderWishlist() {
-    wishlistSidebar.innerHTML = "";
-    if (wishlist.length === 0) {
-      wishlistSidebar.innerHTML = `
-${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
-                <div class="sidebar-empty">
-                    <p>Your wishlist is empty</p>
-                </div>
-                 <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
-    } else {
-      const wishlistItemsHTML = wishlist
+    let itemsHTML = null;
+
+    if (wishlist.length > 0) {
+      itemsHTML = wishlist
         .map((productId) => {
-          const product = products.find((p) => p.id === productId);
+          const product = productMap[productId];
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${product.image}" alt="${safeName}" class="cart-item-img">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
@@ -607,14 +654,16 @@ ${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
                 `;
         })
         .join("");
-      wishlistSidebar.innerHTML = `
-${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
-                <div class="sidebar-items">${wishlistItemsHTML}</div>
-                <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
     }
+
+    renderSidebar({
+      element: wishlistSidebar,
+      title: "Your Wishlist",
+      closeAction: "close-wishlist",
+      emptyMessage: "Your wishlist is empty",
+      itemsHTML,
+      footerHTML: '<button class="checkout-btn">Sign in to save</button>',
+    });
   }
 
   cartBtn.addEventListener("click", () => {
@@ -679,9 +728,7 @@ ${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
       const productId = parseInt(cartItem.dataset.id);
       toggleWishlist(
         productId,
-        document.querySelector(
-          `.product-card[data-id="${productId}"] .wishlist-btn`,
-        ),
+        document.getElementById(`wishlist-btn-${productId}`),
       );
     }
   });
@@ -754,15 +801,17 @@ ${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
         const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
         const safeName1 = escapeHTML(item1.name);
         const safeName2 = escapeHTML(item2.name);
+        const safeImage1 = escapeHTML(item1.image);
+        const safeImage2 = escapeHTML(item2.image);
 
         return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
                         </div>
                     </div>
                     <div>
@@ -793,8 +842,8 @@ ${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
         const id2 = parseInt(e.target.dataset.id2);
 
         // Add both to cart with default sizes if applicable
-        const product1 = products.find((p) => p.id === id1);
-        const product2 = products.find((p) => p.id === id2);
+        const product1 = productMap[id1];
+        const product2 = productMap[id2];
 
         const getSelection = (product) => {
           if (product.category === "Phone Covers") return "iPhone 15";
@@ -821,5 +870,5 @@ ${getSidebarHeaderHTML('Your Wishlist', 'close-wishlist')}
 });
 
 if (typeof module !== "undefined" && module.exports) {
-  module.exports = { getCookie, setCookie };
+  module.exports = { getCookie, setCookie, BackendAPI };
 }

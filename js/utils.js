@@ -11,3 +11,4 @@ function escapeHTML(str) {
     return escapeMap[match];
   });
 }
+if (typeof module !== 'undefined' && module.exports) { module.exports = { escapeHTML }; }
