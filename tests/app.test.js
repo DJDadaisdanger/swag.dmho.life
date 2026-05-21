@@ -7,8 +7,16 @@ global.document = {
   addEventListener: () => {}
 };
 
+let store = {};
+global.localStorage = {
+  getItem: (key) => store[key] || null,
+  setItem: (key, value) => { store[key] = value.toString(); },
+  removeItem: (key) => { delete store[key]; },
+  clear: () => { store = {}; }
+};
+
 // Require the app file
-const { setCookie, getCookie } = require("../js/app.js");
+const { setCookie, getCookie, BackendAPI } = require("../js/app.js");
 
 describe("Cookie Utilities", () => {
   beforeEach(() => {
@@ -64,5 +72,30 @@ describe("Cookie Utilities", () => {
   test("getCookie should handle cookie exactly at the beginning", () => {
       global.document.cookie = "first=1; second=2";
       expect(getCookie("first")).toBe("1");
+  });
+});
+
+describe("BackendAPI.getUserData", () => {
+  beforeEach(() => {
+    store = {};
+    global.document.cookie = "";
+  });
+
+  test("should handle invalid JSON in localStorage gracefully", async () => {
+    localStorage.setItem('wishlist', 'invalid json');
+    localStorage.setItem('cart', '{ bad json');
+
+    // Silence console.error for this test
+    const originalError = console.error;
+    let errorCalled = false;
+    console.error = (...args) => { errorCalled = true; };
+
+    const result = await BackendAPI.getUserData();
+
+    expect(result.wishlist).toEqual([]);
+    expect(result.cart).toEqual([]);
+    expect(errorCalled).toBe(true);
+
+    console.error = originalError;
   });
 });
