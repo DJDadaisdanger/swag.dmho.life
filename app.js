@@ -795,15 +795,17 @@ document.addEventListener("DOMContentLoaded", async () => {
         const bundlePrice = (item1.price + item2.price) * 0.9; // 10% off for bundle
         const safeName1 = escapeHTML(item1.name);
         const safeName2 = escapeHTML(item2.name);
+        const safeImage1 = escapeHTML(item1.image);
+        const safeImage2 = escapeHTML(item2.image);
 
         return `
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${item1.image}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${item2.image}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
                         </div>
                     </div>
                     <div>
