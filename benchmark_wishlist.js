@@ -1,13 +1,21 @@
-const wishlist = Array.from({ length: 1000 }, () => Math.floor(Math.random() * 10000));
+const wishlist = Array.from({ length: 1000 }, (_, i) => i * 2);
 const products = Array.from({ length: 10000 }, (_, i) => ({ id: i }));
 
-console.log("Starting Benchmark: Array.includes vs Set.has (10000 iterations over 1000 items)");
+console.log("Starting Benchmark: Array.includes vs Set.has (10000 lookups against 1000 items)");
 
 console.time("Array.includes");
-products.map(p => wishlist.includes(p.id));
+let c1 = 0;
+products.forEach(p => {
+    if (wishlist.includes(p.id)) c1++;
+});
 console.timeEnd("Array.includes");
 
-console.time("Set.has");
 const wishlistSet = new Set(wishlist);
-products.map(p => wishlistSet.has(p.id));
+console.time("Set.has");
+let c2 = 0;
+products.forEach(p => {
+    if (wishlistSet.has(p.id)) c2++;
+});
 console.timeEnd("Set.has");
+
+console.log(`Results check: ${c1} === ${c2}`);
