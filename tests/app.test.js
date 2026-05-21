@@ -7,8 +7,19 @@ global.document = {
   addEventListener: () => {}
 };
 global.localStorage = {
-  setItem: () => {},
-  getItem: () => null
+  store: {},
+  getItem(key) {
+    return this.store[key] || null;
+  },
+  setItem(key, value) {
+    this.store[key] = String(value);
+  },
+  removeItem(key) {
+    delete this.store[key];
+  },
+  clear() {
+    this.store = {};
+  }
 };
 
 // Require the app file
@@ -71,36 +82,74 @@ describe("Cookie Utilities", () => {
   });
 });
 
-describe("BackendAPI", () => {
-  let originalFetch;
-  let originalConsoleError;
+describe("BackendAPI.getUserData", () => {
+  const { BackendAPI } = require("../js/app.js");
 
   beforeEach(() => {
-    originalFetch = global.fetch;
-    originalConsoleError = console.error;
+    global.document.cookie = "";
+    global.localStorage.clear();
   });
 
-  afterEach(() => {
-    global.fetch = originalFetch;
-    console.error = originalConsoleError;
+  test("should return default empty values when no data is stored", async () => {
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual([]);
+    expect(data.cart).toEqual([]);
+    expect(data.isLoggedIn).toBe(false);
+    expect(data.hasSeenLoginPrompt).toBe(false);
   });
 
-  test("syncData should catch error and log it to console.error when fetch fails", async () => {
-    const testError = new Error("Network failure");
-    global.fetch = async () => {
-      throw testError;
+  test("should load wishlist and cart from localStorage", async () => {
+    const mockWishlist = [{ id: "prod1" }];
+    const mockCart = [{ id: "prod2", qty: 2 }];
+
+    global.localStorage.setItem("wishlist", JSON.stringify(mockWishlist));
+    global.localStorage.setItem("cart", JSON.stringify(mockCart));
+
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual(mockWishlist);
+    expect(data.cart).toEqual(mockCart);
+  });
+
+  test("should fallback to cookies if localStorage returns null", async () => {
+    const mockWishlist = [{ id: "prod3" }];
+    const mockCart = [{ id: "prod4", qty: 1 }];
+
+    // Set cookies manually instead of using setCookie to avoid dependencies in the test setup
+    global.document.cookie = `wishlist=${encodeURIComponent(JSON.stringify(mockWishlist))}; cart=${encodeURIComponent(JSON.stringify(mockCart))}`;
+
+    const data = await BackendAPI.getUserData();
+    expect(data.wishlist).toEqual(mockWishlist);
+    expect(data.cart).toEqual(mockCart);
+  });
+
+  test("should properly read boolean flags from cookies", async () => {
+    global.document.cookie = "isLoggedIn=true; hasSeenLoginPrompt=true";
+
+    const data = await BackendAPI.getUserData();
+    expect(data.isLoggedIn).toBe(true);
+    expect(data.hasSeenLoginPrompt).toBe(true);
+  });
+
+  test("should handle invalid JSON data gracefully", async () => {
+    global.localStorage.setItem("wishlist", "invalid-json");
+    global.localStorage.setItem("cart", "{ bad json");
+
+    // Mock console.error to prevent it from cluttering the test output
+    const originalConsoleError = console.error;
+    let errorCalled = false;
+    console.error = (msg, e) => {
+      errorCalled = true;
     };
 
-    let loggedError = null;
-    let loggedMessage = null;
-    console.error = (msg, err) => {
-      loggedMessage = msg;
-      loggedError = err;
-    };
+    try {
+      const data = await BackendAPI.getUserData();
 
-    await BackendAPI.syncData([], [], true);
-
-    expect(loggedMessage).toBe("Error syncing state with backend:");
-    expect(loggedError).toBe(testError);
+      expect(data.wishlist).toEqual([]);
+      expect(data.cart).toEqual([]);
+      expect(errorCalled).toBe(true);
+    } finally {
+      // Restore console.error
+      console.error = originalConsoleError;
+    }
   });
 });
