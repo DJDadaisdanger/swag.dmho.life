@@ -370,10 +370,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const action = () => {
       if (index > -1) {
         wishlist.splice(index, 1);
-        btn.classList.remove("active");
+        if (btn) btn.classList.remove("active");
       } else {
         wishlist.push(productId);
-        btn.classList.add("active");
+        if (btn) btn.classList.add("active");
       }
       saveState();
       updateWishlistBadge();
@@ -724,9 +724,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const productId = parseInt(cartItem.dataset.id);
       toggleWishlist(
         productId,
-        document.querySelector(
-          `.product-card[data-id="${productId}"] .wishlist-btn`,
-        ),
+        document.getElementById(`wishlist-btn-${productId}`),
       );
     }
   });
