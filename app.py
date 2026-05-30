@@ -24,7 +24,8 @@ def init_db():
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Prevent accessing sensitive files
-        if self.path == '/database.db' or self.path == '/app.py':
+        translated_path = self.translate_path(self.path)
+        if translated_path in (os.path.abspath('database.db'), os.path.abspath('app.py')):
             self.send_error(403, "Forbidden")
             return
         super().do_GET()
