@@ -232,58 +232,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
-      onNvm();
-      return;
-    }
-    window.pendingLoginActions = [];
-    window.pendingLoginActionsLogin = [];
-  }
-
-    if (document.getElementById("loginPromptModal")) {
-      // Modal already exists, just attach to it or wait.
-      loginQueue.add(onNvm);
-      loginQueue.addLogin(onLogin);
-      return;
-    }
-
-    loginQueue.add(onNvm);
-    loginQueue.addLogin(onLogin);
-
-    const modalHtml = `
-            <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
-                <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
-                    <h2 style="margin-bottom: 1rem;">Save Your Progress</h2>
-                    <p style="margin-bottom: 2rem; color: #888;">You must login to save your wishlist and cart securely.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button id="nvmBtn" style="background: #1a1a1a; color: #eeeeee; border: 1px solid #2a2a2a; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Nvm</button>
-                        <button id="loginBtn" style="background: #3b82f6; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Login</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHtml);
-    const modal = document.getElementById("loginPromptModal");
-
-    document.getElementById("nvmBtn").addEventListener("click", () => {
-      modal.remove();
-      hasSeenLoginPrompt = true;
-      setCookie("hasSeenLoginPrompt", "true");
-      loginQueue.execute();
-    });
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      modal.remove();
-      isLoggedIn = await BackendAPI.login();
-      hasSeenLoginPrompt = true;
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
-    });
-  }
-
-  function showLoginPrompt(onLogin, onNvm) {
-    if (isLoggedIn || hasSeenLoginPrompt) {
       if (onNvm) onNvm();
       return;
     }
