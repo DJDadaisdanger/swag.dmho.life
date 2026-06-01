@@ -109,7 +109,7 @@ const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
 function setCookie(name, value, days = 7) {
   const d = new Date();
-  d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie =
     name + "=" + encodeURIComponent(value) + ";" + expires + ";path=/";
@@ -208,6 +208,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   let activeCategory = "all";
   let activeTag = "all";
 
+  function getSidebarHeaderHTML(title, action) {
+    return `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${action}">&times;</button>
+                </div>`;
+  }
+
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
     return String(str).replace(/[&<>"']/g, function (match) {
@@ -224,61 +232,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
-      onNvm();
+      if (onNvm) onNvm();
       return;
     }
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
       // Since we're executing back to back, the easiest is to set a global pending action queue.
-      window.pendingLoginActions = window.pendingLoginActions || [];
-      window.pendingLoginActions.push(onNvm); // For NVM
-      window.pendingLoginActionsLogin = window.pendingLoginActionsLogin || [];
-      window.pendingLoginActionsLogin.push(onLogin);
+      enqueueLoginAction(onLogin, onNvm);
       return;
     }
 
-    window.pendingLoginActions = [onNvm];
-    window.pendingLoginActionsLogin = [onLogin];
-
-    const modalHtml = `
-            <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
-                <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
-                    <h2 style="margin-bottom: 1rem;">Save Your Progress</h2>
-                    <p style="margin-bottom: 2rem; color: #888;">You must login to save your wishlist and cart securely.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button id="nvmBtn" style="background: #1a1a1a; color: #eeeeee; border: 1px solid #2a2a2a; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Nvm</button>
-                        <button id="loginBtn" style="background: #3b82f6; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Login</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHtml);
-    const modal = document.getElementById("loginPromptModal");
-
-    document.getElementById("nvmBtn").addEventListener("click", () => {
-      modal.remove();
-      hasSeenLoginPrompt = true;
-      setCookie("hasSeenLoginPrompt", "true");
-      window.pendingLoginActions.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
-    });
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      modal.remove();
-      isLoggedIn = await BackendAPI.login();
-      hasSeenLoginPrompt = true;
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
-    });
+    enqueueLoginAction(onLogin, onNvm);
+    createLoginPromptModal();
   }
 
   function showNotification(message) {
     const notification = document.createElement("div");
     notification.className = "success-message";
+    const safeMessage = escapeHTML(message);
     notification.innerHTML = `
       <div style="display: flex; align-items: center; gap: 0.5rem;">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -286,9 +258,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           <circle cx="20" cy="21" r="1"></circle>
           <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
         </svg>
-        <span>${message}</span>
+        <span>${safeMessage}</span>
       </div>
     `;
+    notification.querySelector("span").textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => {
       if (document.body.contains(notification)) {
@@ -308,6 +281,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const tagMatch = activeTag === "all" || product.tags.includes(activeTag);
       return categoryMatch && tagMatch;
     });
+
+    const wishlistSet = new Set(wishlist);
 
     productsGrid.innerHTML = filteredProducts
       .map((product) => {
@@ -362,27 +337,31 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  function executeWithLoginPrompt(action) {
+    if (cart.length === 0 && wishlist.length === 0) {
+      showLoginPrompt(action, action);
+    } else {
+      action();
+    }
+  }
+
   function toggleWishlist(productId, btn) {
     const index = wishlist.indexOf(productId);
 
     const action = () => {
       if (index > -1) {
         wishlist.splice(index, 1);
-        btn.classList.remove("active");
+        if (btn) btn.classList.remove("active");
       } else {
         wishlist.push(productId);
-        btn.classList.add("active");
+        if (btn) btn.classList.add("active");
       }
       saveState();
       updateWishlistBadge();
       renderWishlist();
     };
 
-    if (index === -1 && wishlist.length === 0 && cart.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
   }
 
   function openProductModal(productId) {
@@ -538,30 +517,43 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveState();
       updateCartBadge();
       renderCart();
-      showNotification('Added to cart');
+      showNotification("Added to cart");
     };
 
-    if (cart.length === 0 && wishlist.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
+  }
+
+  function renderSidebar(options) {
+    const { element, title, closeAction, emptyMessage, itemsHTML, footerHTML } =
+      options;
+    element.innerHTML = `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${closeAction}">&times;</button>
+                </div>
+                ${
+                  itemsHTML
+                    ? `<div class="sidebar-items">${itemsHTML}</div>`
+                    : `<div class="sidebar-empty">
+                    <p>${emptyMessage}</p>
+                </div>`
+                }
+                ${
+                  footerHTML
+                    ? `<div class="sidebar-footer">
+                    ${footerHTML}
+                </div>`
+                    : ""
+                }
+            `;
   }
 
   function renderCart() {
-    cartSidebar.innerHTML = "";
-    if (cart.length === 0) {
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-empty">
-                    <p>Your cart is empty</p>
-                </div>
-            `;
-    } else {
-      const cartItemsHTML = cart
+    let itemsHTML = null;
+    let footerHTML = null;
+
+    if (cart.length > 0) {
+      itemsHTML = cart
         .map((item) => {
           const product = productMap[item.id];
           return `
@@ -598,40 +590,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         return acc + product.price * item.quantity;
       }, 0);
 
-      cartSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Cart</h3>
-                    <button class="close-btn" data-action="close-cart">&times;</button>
-                </div>
-                <div class="sidebar-items">${cartItemsHTML}</div>
-                <div class="sidebar-footer">
+      footerHTML = `
                     <div class="cart-total">
                         <span>Total</span>
                         <span>₹${total.toFixed(2)}</span>
                     </div>
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
-                </div>
-            `;
+                `;
     }
+
+    renderSidebar({
+      element: cartSidebar,
+      title: "Your Cart",
+      closeAction: "close-cart",
+      emptyMessage: "Your cart is empty",
+      itemsHTML,
+      footerHTML,
+    });
   }
 
   function renderWishlist() {
-    wishlistSidebar.innerHTML = "";
-    if (wishlist.length === 0) {
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-empty">
-                    <p>Your wishlist is empty</p>
-                </div>
-                 <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
-    } else {
-      const wishlistItemsHTML = wishlist
+    let itemsHTML = null;
+
+    if (wishlist.length > 0) {
+      itemsHTML = wishlist
         .map((productId) => {
           const product = productMap[productId];
           const safeName = escapeHTML(product.name);
@@ -647,17 +629,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 `;
         })
         .join("");
-      wishlistSidebar.innerHTML = `
-                <div class="sidebar-header">
-                    <h3>Your Wishlist</h3>
-                    <button class="close-btn" data-action="close-wishlist">&times;</button>
-                </div>
-                <div class="sidebar-items">${wishlistItemsHTML}</div>
-                <div class="sidebar-footer">
-                    <button class="checkout-btn">Sign in to save</button>
-                </div>
-            `;
     }
+
+    renderSidebar({
+      element: wishlistSidebar,
+      title: "Your Wishlist",
+      closeAction: "close-wishlist",
+      emptyMessage: "Your wishlist is empty",
+      itemsHTML,
+      footerHTML: '<button class="checkout-btn">Sign in to save</button>',
+    });
   }
 
   cartBtn.addEventListener("click", () => {
@@ -722,9 +703,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const productId = parseInt(cartItem.dataset.id);
       toggleWishlist(
         productId,
-        document.querySelector(
-          `.product-card[data-id="${productId}"] .wishlist-btn`,
-        ),
+        document.getElementById(`wishlist-btn-${productId}`),
       );
     }
   });
@@ -840,13 +819,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Add both to cart with default sizes if applicable
         const product1 = productMap[id1];
         const product2 = productMap[id2];
-
-        const getSelection = (product) => {
-          if (product.category === "Phone Covers") return "iPhone 15";
-          if (product.category === "iPad Covers") return "iPad Pro 11";
-          if (product.category !== "Mugs") return "M";
-          return "N/A";
-        };
 
         addToCart(id1, getSelection(product1), 1);
         addToCart(id2, getSelection(product2), 1);
