@@ -8,7 +8,11 @@ global.document = {
     return this._cookie;
   },
   set cookie(val) {
-    this._cookie = val;
+    if (val === "") {
+      this._cookie = "";
+    } else {
+      this._cookie = this._cookie ? this._cookie + "; " + val : val;
+    }
   },
   addEventListener: () => {}
 };
@@ -26,6 +30,14 @@ global.localStorage = {
   clear() {
     this.store = {};
   }
+};
+
+let store = {};
+global.localStorage = {
+  getItem: (key) => store[key] || null,
+  setItem: (key, value) => { store[key] = value.toString(); },
+  removeItem: (key) => { delete store[key]; },
+  clear: () => { store = {}; }
 };
 
 // Require the app file
@@ -157,5 +169,21 @@ describe("BackendAPI.getUserData", () => {
       // Restore console.error
       console.error = originalConsoleError;
     }
+  });
+});
+
+describe("BackendAPI.login", () => {
+  const { BackendAPI, getCookie } = require("../js/app.js");
+
+  beforeEach(() => {
+    global.document.cookie = "";
+  });
+
+  test("should set isLoggedIn and hasSeenLoginPrompt cookies to true and return true", async () => {
+    const result = await BackendAPI.login();
+
+    expect(result).toBe(true);
+    expect(getCookie("isLoggedIn")).toBe("true");
+    expect(getCookie("hasSeenLoginPrompt")).toBe("true");
   });
 });
