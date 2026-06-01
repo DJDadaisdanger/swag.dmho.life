@@ -208,6 +208,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   let activeCategory = "all";
   let activeTag = "all";
 
+  function getSidebarHeaderHTML(title, action) {
+    return `
+                <div class="sidebar-header">
+                    <h3>${title}</h3>
+                    <button class="close-btn" data-action="${action}">&times;</button>
+                </div>`;
+  }
+
   function escapeHTML(str) {
     if (str === null || str === undefined) return "";
     return String(str).replace(/[&<>"']/g, function (match) {
@@ -224,51 +232,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
-      onNvm();
+      if (onNvm) onNvm();
       return;
     }
 
     if (document.getElementById("loginPromptModal")) {
       // Modal already exists, just attach to it or wait.
-      loginQueue.add(onNvm);
-      loginQueue.addLogin(onLogin);
+      // Since we're executing back to back, the easiest is to set a global pending action queue.
+      enqueueLoginAction(onLogin, onNvm);
       return;
     }
 
-    loginQueue.add(onNvm);
-    loginQueue.addLogin(onLogin);
-
-    const modalHtml = `
-            <div class="modal open" id="loginPromptModal" style="z-index: 5000;">
-                <div class="modal-content" style="max-width: 400px; text-align: center; padding: 2rem;">
-                    <h2 style="margin-bottom: 1rem;">Save Your Progress</h2>
-                    <p style="margin-bottom: 2rem; color: #888;">You must login to save your wishlist and cart securely.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
-                        <button id="nvmBtn" style="background: #1a1a1a; color: #eeeeee; border: 1px solid #2a2a2a; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Nvm</button>
-                        <button id="loginBtn" style="background: #3b82f6; color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">Login</button>
-                    </div>
-                </div>
-            </div>
-        `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHtml);
-    const modal = document.getElementById("loginPromptModal");
-
-    document.getElementById("nvmBtn").addEventListener("click", () => {
-      modal.remove();
-      hasSeenLoginPrompt = true;
-      setCookie("hasSeenLoginPrompt", "true");
-      loginQueue.execute();
-    });
-
-    document.getElementById("loginBtn").addEventListener("click", async () => {
-      modal.remove();
-      isLoggedIn = await BackendAPI.login();
-      hasSeenLoginPrompt = true;
-      window.pendingLoginActionsLogin.forEach((action) => action());
-      window.pendingLoginActions = [];
-      window.pendingLoginActionsLogin = [];
-    });
+    enqueueLoginAction(onLogin, onNvm);
+    createLoginPromptModal();
   }
 
   function showNotification(message) {
@@ -285,6 +261,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         <span>${safeMessage}</span>
       </div>
     `;
+    notification.querySelector("span").textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => {
       if (document.body.contains(notification)) {
@@ -360,6 +337,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  function executeWithLoginPrompt(action) {
+    if (cart.length === 0 && wishlist.length === 0) {
+      showLoginPrompt(action, action);
+    } else {
+      action();
+    }
+  }
+
   function toggleWishlist(productId, btn) {
     const index = wishlist.indexOf(productId);
 
@@ -376,11 +361,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderWishlist();
     };
 
-    if (index === -1 && wishlist.length === 0 && cart.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
   }
 
   function openProductModal(productId) {
@@ -554,11 +535,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       showNotification("Added to cart");
     };
 
-    if (cart.length === 0 && wishlist.length === 0) {
-      showLoginPrompt(action, action);
-    } else {
-      action();
-    }
+    executeWithLoginPrompt(action);
   }
 
   function renderSidebar(options) {
@@ -851,13 +828,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         // Add both to cart with default sizes if applicable
         const product1 = productMap[id1];
         const product2 = productMap[id2];
-
-        const getSelection = (product) => {
-          if (product.category === "Phone Covers") return "iPhone 15";
-          if (product.category === "iPad Covers") return "iPad Pro 11";
-          if (product.category !== "Mugs") return "M";
-          return "N/A";
-        };
 
         addToCart(id1, getSelection(product1), 1);
         addToCart(id2, getSelection(product2), 1);
