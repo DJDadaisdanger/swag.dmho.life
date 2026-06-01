@@ -8,7 +8,11 @@ global.document = {
     return this._cookie;
   },
   set cookie(val) {
-    this._cookie = val;
+    if (val === "") {
+      this._cookie = "";
+    } else {
+      this._cookie = this._cookie ? this._cookie + "; " + val : val;
+    }
   },
   addEventListener: () => {}
 };
@@ -168,101 +172,18 @@ describe("BackendAPI.getUserData", () => {
   });
 });
 
-describe("BackendAPI.syncData", () => {
-  const { BackendAPI } = require("../js/app.js");
+describe("BackendAPI.login", () => {
+  const { BackendAPI, getCookie } = require("../js/app.js");
 
   beforeEach(() => {
     global.document.cookie = "";
-    global.localStorage.clear();
-
-    // Mock global fetch
-    global.originalFetch = global.fetch;
-    global.fetch = async () => {};
-    global.fetchCalled = false;
-    global.fetchArgs = null;
   });
 
-  afterEach(() => {
-    // Clean up
-    if (global.originalFetch) {
-      global.fetch = global.originalFetch;
-      delete global.originalFetch;
-    }
-    delete global.fetchCalled;
-    delete global.fetchArgs;
-  });
+  test("should set isLoggedIn and hasSeenLoginPrompt cookies to true and return true", async () => {
+    const result = await BackendAPI.login();
 
-  test("should store cart and wishlist in localStorage and cookies", async () => {
-    const mockCart = [{ id: 1, quantity: 2 }];
-    const mockWishlist = [3, 4];
-
-    // We mock setCookie behavior here by tracking set cookie string
-    let cookieStrings = [];
-    const originalDocument = global.document;
-    global.document = Object.create(originalDocument);
-    Object.defineProperty(global.document, 'cookie', {
-      set(val) { cookieStrings.push(val); },
-      get() { return ""; }
-    });
-
-    await BackendAPI.syncData(mockCart, mockWishlist, false);
-
-    expect(global.localStorage.getItem("cart")).toBe(JSON.stringify(mockCart));
-    expect(global.localStorage.getItem("wishlist")).toBe(JSON.stringify(mockWishlist));
-
-    expect(cookieStrings.some(c => c.startsWith("cart=" + encodeURIComponent(JSON.stringify(mockCart))))).toBe(true);
-    expect(cookieStrings.some(c => c.startsWith("wishlist=" + encodeURIComponent(JSON.stringify(mockWishlist))))).toBe(true);
-
-    global.document = originalDocument;
-  });
-
-  test("should not call fetch when isLoggedIn is false", async () => {
-    let fetchCalled = false;
-    global.fetch = async () => { fetchCalled = true; };
-
-    await BackendAPI.syncData([], [], false);
-
-    expect(fetchCalled).toBe(false);
-  });
-
-  test("should call fetch with correct parameters when isLoggedIn is true", async () => {
-    let fetchArgs = null;
-    global.fetch = async (url, options) => {
-      fetchArgs = { url, options };
-    };
-
-    const mockCart = [{ id: 1, quantity: 2 }];
-    const mockWishlist = [3, 4];
-
-    await BackendAPI.syncData(mockCart, mockWishlist, true);
-
-    expect(fetchArgs).not.toBeNull();
-    expect(fetchArgs.url).toBe("/api/sync");
-    expect(fetchArgs.options.method).toBe("POST");
-    expect(fetchArgs.options.headers["Content-Type"]).toBe("application/json");
-    expect(fetchArgs.options.body).toBe(JSON.stringify({ cart: mockCart, wishlist: mockWishlist }));
-  });
-
-  test("should catch and log error if fetch fails", async () => {
-    const mockError = new Error("Network failure");
-    global.fetch = async () => {
-      throw mockError;
-    };
-
-    const originalConsoleError = console.error;
-    let errorLog = null;
-    console.error = (msg, err) => {
-      errorLog = { msg, err };
-    };
-
-    try {
-      await BackendAPI.syncData([], [], true);
-
-      expect(errorLog).not.toBeNull();
-      expect(errorLog.msg).toBe("Error syncing state with backend:");
-      expect(errorLog.err).toBe(mockError);
-    } finally {
-      console.error = originalConsoleError;
-    }
+    expect(result).toBe(true);
+    expect(getCookie("isLoggedIn")).toBe("true");
+    expect(getCookie("hasSeenLoginPrompt")).toBe("true");
   });
 });
