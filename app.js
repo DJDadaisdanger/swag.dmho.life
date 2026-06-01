@@ -379,7 +379,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                         <input list="device-models" id="device-select" name="device-select" class="dropdown-select" placeholder="Type or select model..." />
                         <datalist id="device-models">
                             ${
-                              product.category === "Phone Covers"
+                              category === "Phone Covers"
                                 ? `<option value="iPhone 13">
                                 <option value="iPhone 13 Pro">
                                 <option value="iPhone 13 Pro Max">
@@ -417,8 +417,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </div>
                 </div>
             `;
-    } else if (!isMug) {
-      selectorHtml = `
+  }
+
+  function renderSizeSelector() {
+    return `
                 <div class="size-selector">
                     <label for="size-select">Size</label>
                     <div class="size-options">
@@ -432,6 +434,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </div>
                 </div>
             `;
+  }
+
+  function openProductModal(productId) {
+    const product = products.find((p) => p.id === productId);
+    const isCover =
+      product.category === "Phone Covers" || product.category === "iPad Covers";
+    const isMug = product.category === "Mugs";
+
+    let selectorHtml = "";
+    if (isCover) {
+      selectorHtml = renderDeviceSelector(product.category);
+    } else if (!isMug) {
+      selectorHtml = renderSizeSelector();
     }
 
     const safeName = escapeHTML(product.name);
