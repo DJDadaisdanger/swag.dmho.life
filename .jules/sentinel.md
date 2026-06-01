@@ -22,3 +22,4 @@
 ### DOM-based XSS in innerHTML
 - **Vulnerability:** Interpolating untrusted/un-escaped variables directly into `innerHTML` allows for Cross-Site Scripting (XSS).
 - **Solution:** Always escape dynamic values using a utility like `escapeHTML` prior to interpolation, or use safer properties like `textContent`.
+When extending Python's http.server.SimpleHTTPRequestHandler, do_GET must explicitly block access to sensitive files. To prevent directory traversal bypasses, always use self.translate_path(self.path) to normalize the path and compare it against absolute system paths (os.path.abspath), rather than performing simple string equality checks.
