@@ -107,6 +107,16 @@ const products = [
 
 const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
+const productsByTag = {};
+for (const p of products) {
+  if (p.tags) {
+    for (const tag of p.tags) {
+      if (!productsByTag[tag]) productsByTag[tag] = [];
+      productsByTag[tag].push(p);
+    }
+  }
+}
+
 function setCookie(name, value, days = 7) {
   const d = new Date();
   d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
@@ -364,60 +374,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     executeWithLoginPrompt(action);
   }
 
-  function openProductModal(productId) {
-    const product = productMap[productId];
-    const isCover =
-      product.category === "Phone Covers" || product.category === "iPad Covers";
-    const isMug = product.category === "Mugs";
-
-    let selectorHtml = "";
-    if (isCover) {
-      selectorHtml = `
-                <div class="device-selector">
-                    <label for="device-select">Device Model</label>
-                    <div class="device-options">
-                        <input list="device-models" id="device-select" name="device-select" class="dropdown-select" placeholder="Type or select model..." />
-                        <datalist id="device-models">
-                            ${
-                              category === "Phone Covers"
-                                ? `<option value="iPhone 13">
-                                <option value="iPhone 13 Pro">
-                                <option value="iPhone 13 Pro Max">
-                                <option value="iPhone 14">
-                                <option value="iPhone 14 Pro">
-                                <option value="iPhone 14 Pro Max">
-                                <option value="iPhone 15">
-                                <option value="iPhone 15 Pro">
-                                <option value="iPhone 15 Pro Max">
-                                <option value="iPhone 16">
-                                <option value="iPhone 16 Pro">
-                                <option value="iPhone 16 Pro Max">
-                                <option value="Samsung Galaxy S23">
-                                <option value="Samsung Galaxy S23+">
-                                <option value="Samsung Galaxy S23 Ultra">
-                                <option value="Samsung Galaxy S24">
-                                <option value="Samsung Galaxy S24+">
-                                <option value="Samsung Galaxy S24 Ultra">
-                                <option value="Google Pixel 8">
-                                <option value="Google Pixel 8 Pro">
-                                <option value="Google Pixel 9">
-                                <option value="Google Pixel 9 Pro">
-                                <option value="iPhone 17">
-                                <option value="iPhone 17e">
-                                <option value="iPhone 17 Pro">
-                                <option value="iPhone 17 Pro Max">`
-                                : `<option value="iPad Pro 11">
-                                <option value="iPad Pro 12.9">
-                                <option value="iPad Air">
-                                <option value="iPad Mini">
-                                <option value="iPad 10th Gen">
-                                <option value="iPad 9th Gen" />`
-                            }
-                        </datalist>
-                    </div>
-                </div>
-            `;
-  }
 
   function renderSizeSelector() {
     return `
@@ -759,9 +715,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!couplesGrid) return;
 
     // Find all products with the 'couplegoals' tag
-    const coupleProducts = products.filter((p) =>
-      p.tags.includes("couplegoals"),
-    );
+    const coupleProducts = productsByTag["couplegoals"] || [];
 
     // Ensure we have an even number for pairing
     const pairs = [];
