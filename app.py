@@ -2,6 +2,7 @@ import http.server
 import socketserver
 import sqlite3
 import json
+import os
 
 PORT = 8000
 DB_FILE = 'database.db'
