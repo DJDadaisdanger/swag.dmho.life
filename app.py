@@ -2,6 +2,9 @@ import http.server
 import socketserver
 import sqlite3
 import json
+import os
+import uuid
+import http.cookies
 
 PORT = 8000
 DB_FILE = 'database.db'
@@ -21,6 +24,12 @@ def init_db():
     conn.close()
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    def get_user_id(self):
+        cookies = http.cookies.SimpleCookie(self.headers.get('Cookie'))
+        if 'session_id' in cookies:
+            return cookies['session_id'].value
+        return str(uuid.uuid4())
+
     def do_GET(self):
         # Prevent accessing sensitive files
         translated_path = self.translate_path(self.path)
@@ -39,8 +48,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     cart = json.dumps(data.get('cart', []))
                     wishlist = json.dumps(data.get('wishlist', []))
 
-                    # Dummy user_id until OAuth is implemented
-                    user_id = 'dummy_user'
+                    user_id = self.get_user_id()
 
                     conn = sqlite3.connect(DB_FILE)
                     c = conn.cursor()
@@ -56,6 +64,11 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
                     self.send_response(200)
                     self.send_header('Content-type', 'application/json')
+                    cookie = http.cookies.SimpleCookie()
+                    cookie['session_id'] = user_id
+                    cookie['session_id']['path'] = '/'
+                    cookie['session_id']['httponly'] = True
+                    self.send_header('Set-Cookie', cookie['session_id'].OutputString())
                     self.end_headers()
                     response = {'status': 'success'}
                     self.wfile.write(json.dumps(response).encode('utf-8'))
