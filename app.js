@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function openProductModal(productId) {
-    const product = products.find((p) => p.id === productId);
+    const product = productMap[productId];
     const isCover =
       product.category === "Phone Covers" || product.category === "iPad Covers";
     const isMug = product.category === "Mugs";
@@ -477,9 +477,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function addToCart(productId, selection, quantity) {
     const action = () => {
-      const existingItem = cart.find(
-        (item) => item.id === productId && item.selection === selection,
-      );
+      let existingItem = null;
+      for (let i = 0; i < cart.length; i++) {
+        if (cart[i].id === productId && cart[i].selection === selection) {
+          existingItem = cart[i];
+          break;
+        }
+      }
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
@@ -640,9 +644,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const cartItem = e.target.closest(".cart-item");
       const productId = parseInt(cartItem.dataset.id);
       const selection = cartItem.dataset.selection;
-      const item = cart.find(
-        (item) => item.id === productId && item.selection === selection,
-      );
+      let item = null;
+      for (let i = 0; i < cart.length; i++) {
+        if (cart[i].id === productId && cart[i].selection === selection) {
+          item = cart[i];
+          break;
+        }
+      }
       if (item.quantity > 1) {
         item.quantity--;
         saveState();
@@ -653,9 +661,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const cartItem = e.target.closest(".cart-item");
       const productId = parseInt(cartItem.dataset.id);
       const selection = cartItem.dataset.selection;
-      const item = cart.find(
-        (item) => item.id === productId && item.selection === selection,
-      );
+      let item = null;
+      for (let i = 0; i < cart.length; i++) {
+        if (cart[i].id === productId && cart[i].selection === selection) {
+          item = cart[i];
+          break;
+        }
+      }
       item.quantity++;
       saveState();
       renderCart();
