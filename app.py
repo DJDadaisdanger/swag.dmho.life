@@ -1,3 +1,4 @@
+import os
 import http.server
 import socketserver
 import sqlite3
@@ -21,12 +22,69 @@ def init_db():
     conn.close()
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    def do_GET(self):
-        # Prevent accessing sensitive files
+    def do_HEAD(self):
+        # Apply the same allowlist logic for HEAD requests
         translated_path = self.translate_path(self.path)
-        if translated_path in (os.path.abspath('database.db'), os.path.abspath('app.py')):
+        base_dir = os.getcwd()
+
+        if not translated_path.startswith(base_dir):
             self.send_error(403, "Forbidden")
             return
+
+        rel_path = os.path.relpath(translated_path, base_dir)
+
+        allowed_dirs = ['assets', 'css', 'js', 'webfonts']
+        allowed_files = ['index.html', 'checkout.html']
+
+        is_allowed = False
+        if rel_path == '.' or rel_path == '':
+            is_allowed = True
+        elif rel_path in allowed_files:
+            is_allowed = True
+        else:
+            for d in allowed_dirs:
+                if rel_path == d or rel_path.startswith(d + os.sep):
+                    is_allowed = True
+                    break
+
+        if not is_allowed:
+            self.send_error(403, "Forbidden")
+            return
+
+        super().do_HEAD()
+
+    def do_GET(self):
+        # Prevent accessing sensitive files using an allowlist
+        translated_path = self.translate_path(self.path)
+        base_dir = os.getcwd()
+
+        # Ensure the requested path is within the base directory to prevent path traversal
+        if not translated_path.startswith(base_dir):
+            self.send_error(403, "Forbidden")
+            return
+
+        rel_path = os.path.relpath(translated_path, base_dir)
+
+        # Allowed directories and files
+        allowed_dirs = ['assets', 'css', 'js', 'webfonts']
+        allowed_files = ['index.html', 'checkout.html']
+
+        is_allowed = False
+
+        if rel_path == '.' or rel_path == '':
+            is_allowed = True
+        elif rel_path in allowed_files:
+            is_allowed = True
+        else:
+            for d in allowed_dirs:
+                if rel_path == d or rel_path.startswith(d + os.sep):
+                    is_allowed = True
+                    break
+
+        if not is_allowed:
+            self.send_error(403, "Forbidden")
+            return
+
         super().do_GET()
 
     def do_POST(self):
