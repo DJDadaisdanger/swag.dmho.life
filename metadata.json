@@ -1,0 +1,6 @@
+{
+  "name": "Swag Studio",
+  "description": "Intellectual Designs for Cool People. Express your personality with our curated collection of minimalist, thought-provoking designs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

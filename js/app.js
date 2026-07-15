@@ -2,104 +2,104 @@ const products = [
   {
     id: 1,
     name: "Brainrot",
-    price: 19.99,
-    image: "assets/brainrot.svg",
+    price: 199,
+    image: "assets/brainrot.webp",
     category: "T-Shirts",
     tags: ["crazy", "design"],
   },
   {
     id: 2,
     name: "Couple Goals",
-    price: 29.99,
-    image: "assets/couple goals.svg",
+    price: 299,
+    image: "assets/couple goals.webp",
     category: "T-Shirts",
     tags: ["couplegoals"],
   },
   {
     id: 3,
     name: "Intellactual",
-    price: 24.99,
-    image: "assets/intellactual.svg",
+    price: 249,
+    image: "assets/intellactual.webp",
     category: "T-Shirts",
     tags: ["intellectual", "design"],
   },
   {
     id: 4,
     name: "Mug",
-    price: 14.99,
-    image: "assets/mug.svg",
+    price: 149,
+    image: "assets/mug.webp",
     category: "Mugs",
     tags: ["nerdy", "design"],
   },
   {
     id: 5,
     name: "Nerdy",
-    price: 22.99,
-    image: "assets/nerdy.svg",
+    price: 229,
+    image: "assets/nerdy.webp",
     category: "T-Shirts",
     tags: ["nerdy", "design"],
   },
   {
     id: 6,
     name: "Robo",
-    price: 27.99,
-    image: "assets/robo.svg",
+    price: 279,
+    image: "assets/robo.webp",
     category: "T-Shirts",
     tags: ["nerdy", "design"],
   },
   {
     id: 7,
     name: "T Sherting",
-    price: 19.99,
-    image: "assets/t sherting.svg",
+    price: 199,
+    image: "assets/t sherting.webp",
     category: "T-Shirts",
     tags: ["intellectual", "design"],
   },
   {
     id: 8,
     name: "Cute Cover",
-    price: 39.99,
-    image: "assets/covers/cute.svg",
+    price: 399,
+    image: "assets/covers/cute.webp",
     category: "Phone Covers",
     tags: ["cute", "design"],
   },
   {
     id: 9,
     name: "Pair A Cover",
-    price: 45.99,
-    image: "assets/covers/pair A.svg",
+    price: 459,
+    image: "assets/covers/pair A.webp",
     category: "Phone Covers",
     tags: ["couplegoals", "design"],
   },
   {
     id: 10,
     name: "Totem Cover",
-    price: 42.99,
-    image: "assets/covers/totem.svg",
+    price: 429,
+    image: "assets/covers/totem.webp",
     category: "Phone Covers",
     tags: ["spiritual", "design"],
   },
   {
     id: 11,
     name: "Cute iPad Cover",
-    price: 59.99,
-    image: "assets/covers/cute.svg",
+    price: 599,
+    image: "assets/covers/cute.webp",
     category: "iPad Covers",
     tags: ["cute", "design"],
   },
   {
     id: 12,
     name: "Pair A iPad Cover",
-    price: 65.99,
-    image: "assets/covers/pair A.svg",
+    price: 659,
+    image: "assets/covers/pair A.webp",
     category: "iPad Covers",
     tags: ["couplegoals", "design"],
   },
   {
     id: 13,
     name: "Totem iPad Cover",
-    price: 62.99,
-    image: "assets/covers/totem.svg",
+    price: 629,
+    image: "assets/covers/totem.webp",
     category: "iPad Covers",
     tags: ["spiritual", "design"],
   },
@@ -217,6 +217,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   let hasSeenLoginPrompt = userData.hasSeenLoginPrompt;
   let activeCategory = "all";
   let activeTag = "all";
+  const gallerySearchInput = document.getElementById("gallerySearchInput");
+  const searchClearBtn = document.getElementById("searchClearBtn");
+  const carouselContainer = document.getElementById("featuredCarouselContainer");
+  const categoriesSection = document.getElementById("categoriesSection");
+  let searchQuery = "";
 
   function getSidebarHeaderHTML(title, action) {
     return `
@@ -240,6 +245,63 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  function highlightText(text, query) {
+    const escapedText = escapeHTML(text);
+    if (!query) return escapedText;
+    const escapedQuery = escapeHTML(query);
+    const regexQuery = escapedQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`(${regexQuery})`, 'gi');
+    return escapedText.replace(regex, '<mark>$1</mark>');
+  }
+
+  // --- Login Action Queue ---
+  let loginActionQueue = [];
+
+  function enqueueLoginAction(onLogin, onNvm) {
+    loginActionQueue.push({ onLogin, onNvm });
+  }
+
+  function processLoginQueue(loggedIn) {
+    const queue = loginActionQueue.slice();
+    loginActionQueue = [];
+    queue.forEach(({ onLogin, onNvm }) => {
+      if (loggedIn && onLogin) onLogin();
+      else if (!loggedIn && onNvm) onNvm();
+    });
+  }
+
+  function createLoginPromptModal() {
+    const modal = document.createElement("div");
+    modal.id = "loginPromptModal";
+    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;display:flex;align-items:center;justify-content:center;";
+    modal.innerHTML = `
+      <div style="background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:2rem;max-width:380px;width:90%;text-align:center;">
+        <h3 style="color:#fff;margin-bottom:1rem;">Welcome!</h3>
+        <p style="color:#aaa;margin-bottom:1.5rem;">Sign in to save your cart and wishlist across sessions.</p>
+        <div style="display:flex;gap:1rem;justify-content:center;">
+          <button id="loginPromptSignIn" style="background:#3b82f6;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;">Sign In</button>
+          <button id="loginPromptNvm" style="background:#2a2a2a;color:#ccc;border:1px solid #333;padding:0.7rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;">Not Now</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById("loginPromptSignIn").addEventListener("click", async () => {
+      await BackendAPI.login();
+      isLoggedIn = true;
+      hasSeenLoginPrompt = true;
+      modal.remove();
+      processLoginQueue(true);
+    });
+
+    document.getElementById("loginPromptNvm").addEventListener("click", () => {
+      hasSeenLoginPrompt = true;
+      setCookie("hasSeenLoginPrompt", "true");
+      modal.remove();
+      processLoginQueue(false);
+    });
+  }
+
   function showLoginPrompt(onLogin, onNvm) {
     if (isLoggedIn || hasSeenLoginPrompt) {
       if (onNvm) onNvm();
@@ -247,14 +309,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (document.getElementById("loginPromptModal")) {
-      // Modal already exists, just attach to it or wait.
-      // Since we're executing back to back, the easiest is to set a global pending action queue.
       enqueueLoginAction(onLogin, onNvm);
       return;
     }
 
     enqueueLoginAction(onLogin, onNvm);
     createLoginPromptModal();
+  }
+
+  function getSelection(product) {
+    if (!product) return "N/A";
+    const isCover = product.category === "Phone Covers" || product.category === "iPad Covers";
+    const isMug = product.category === "Mugs";
+    if (isCover) return "iPhone 15";
+    if (isMug) return "N/A";
+    return "M";
   }
 
   function showNotification(message) {
@@ -285,43 +354,59 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function renderProducts() {
+    const query = searchQuery.trim().toLowerCase();
+    
+    // Hide carousel and category sections during active search queries
+    const hasQuery = query.length > 0;
+    if (carouselContainer) {
+      carouselContainer.style.display = hasQuery ? "none" : "";
+    }
+    if (categoriesSection) {
+      categoriesSection.style.display = hasQuery ? "none" : "";
+    }
+
     const filteredProducts = products.filter((product) => {
       const categoryMatch =
         activeCategory === "all" || product.category === activeCategory;
       const tagMatch = activeTag === "all" || product.tags.includes(activeTag);
-      return categoryMatch && tagMatch;
+      const searchMatch = !query || 
+        product.name.toLowerCase().includes(query) || 
+        product.category.toLowerCase().includes(query);
+      return categoryMatch && tagMatch && searchMatch;
     });
 
     const wishlistSet = new Set(wishlist);
 
-    productsGrid.innerHTML = filteredProducts
-      .map((product) => {
-        const safeName = escapeHTML(product.name);
-        return `
-                <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                    <button class="wishlist-btn ${
-                      wishlistSet.has(product.id) ? "active" : ""
-                    }">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                        </svg>
-                    </button>
-                    <div class="product-image-wrapper">
-                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="product-image">
-                    </div>
-                    <div class="product-info">
-                        <div>
-                            <h3 class="product-name">${safeName}</h3>
-                        </div>
-                        <div class="product-meta">
-                            <span class="product-price">₹${product.price}</span>
-                            <span class="product-status">In Stock</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-      })
-      .join("");
+    if (productsGrid) {
+      productsGrid.innerHTML = filteredProducts
+        .map((product) => {
+          const highlightedName = highlightText(product.name, query);
+          return `
+                  <div class="product-card" data-id="${product.id}" data-action="open-modal">
+                      <button class="wishlist-btn ${
+                        wishlistSet.has(product.id) ? "active" : ""
+                      }">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                          </svg>
+                      </button>
+                      <div class="product-image-wrapper">
+                          <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="product-image">
+                      </div>
+                      <div class="product-info">
+                          <div>
+                              <h3 class="product-name">${highlightedName}</h3>
+                          </div>
+                          <div class="product-meta">
+                              <span class="product-price">₹${product.price}</span>
+                              <span class="product-status">In Stock</span>
+                          </div>
+                      </div>
+                  </div>
+              `;
+        })
+        .join("");
+    }
   }
 
   function updateWishlistBadge() {
@@ -334,18 +419,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     cartBadge.style.display = cart.length > 0 ? "flex" : "none";
   }
 
-  productsGrid.addEventListener("click", (e) => {
-    const productCard = e.target.closest(".product-card");
-    if (!productCard) return;
+  if (productsGrid) {
+    productsGrid.addEventListener("click", (e) => {
+      const productCard = e.target.closest(".product-card");
+      if (!productCard) return;
 
-    const productId = parseInt(productCard.dataset.id);
+      const productId = parseInt(productCard.dataset.id);
 
-    if (e.target.closest(".wishlist-btn")) {
-      toggleWishlist(productId, e.target.closest(".wishlist-btn"));
-    } else if (productCard.dataset.action === "open-modal") {
-      openProductModal(productId);
-    }
-  });
+      if (e.target.closest(".wishlist-btn")) {
+        toggleWishlist(productId, e.target.closest(".wishlist-btn"));
+      } else {
+        window.location.href = `product.html?id=${productId}`;
+      }
+    });
+  }
 
   function executeWithLoginPrompt(action) {
     if (cart.length === 0 && wishlist.length === 0) {
@@ -386,6 +473,23 @@ document.addEventListener("DOMContentLoaded", async () => {
                             <option value="L">L</option>
                             <option value="XL">XL</option>
                             <option value="XXL">XXL</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+  }
+
+  function renderDeviceSelector(category) {
+    const devices = category === "iPad Covers"
+      ? ["iPad Air", "iPad Pro 11", "iPad Pro 12.9", "iPad Mini"]
+      : ["iPhone 13", "iPhone 14", "iPhone 15", "iPhone 15 Pro", "iPhone 15 Pro Max"];
+    const options = devices.map(d => `<option value="${escapeHTML(d)}">${escapeHTML(d)}</option>`).join('');
+    return `
+                <div class="device-selector">
+                    <label for="device-select">Device Model</label>
+                    <div class="device-options">
+                        <select id="device-select" class="dropdown-select">
+                            ${options}
                         </select>
                     </div>
                 </div>
@@ -437,43 +541,160 @@ document.addEventListener("DOMContentLoaded", async () => {
     productModal.classList.remove("open");
   }
 
-  productModal.addEventListener("click", (e) => {
-    if (e.target.classList.contains("modal-image")) {
-      e.target.classList.toggle("full-view");
-    } else if (e.target.dataset.action === "close-modal") {
-      const modalImage = document.querySelector(".modal-image");
-      if (modalImage && modalImage.classList.contains("full-view")) {
-        modalImage.classList.remove("full-view");
-      }
-      closeProductModal();
-    } else if (e.target.dataset.action === "decrease-qty") {
-      const qtyDisplay = document.querySelector(".qty-display");
-      let qty = parseInt(qtyDisplay.textContent);
-      if (qty > 1) {
-        qtyDisplay.textContent = qty - 1;
-      }
-    } else if (e.target.dataset.action === "increase-qty") {
-      const qtyDisplay = document.querySelector(".qty-display");
-      qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
-    } else if (e.target.classList.contains("add-to-cart-btn")) {
-      const productId = parseInt(e.target.dataset.id);
-      const sizeSelect = document.getElementById("size-select");
-      const deviceSelect = document.getElementById("device-select");
-      let selection = "N/A";
+  // --- Fullscreen Image Zoom Overlay ---
+  const zoomOverlay = document.getElementById("imageZoomOverlay");
+  const zoomImage = document.getElementById("zoomOverlayImage");
+  const zoomCloseBtn = document.getElementById("zoomCloseBtn");
+  const zoomInBtn = document.getElementById("zoomInBtn");
+  const zoomOutBtn = document.getElementById("zoomOutBtn");
+  const zoomResetBtn = document.getElementById("zoomResetBtn");
+  const zoomImageContainer = document.getElementById("zoomImageContainer");
 
-      if (sizeSelect) {
-        selection = sizeSelect.value;
-      } else if (deviceSelect) {
-        selection = deviceSelect.value || "N/A";
-      }
+  let zoomScale = 1;
+  let zoomTranslateX = 0;
+  let zoomTranslateY = 0;
+  let isDraggingZoom = false;
+  let startDragX = 0;
+  let startDragY = 0;
 
-      const quantity = parseInt(
-        document.querySelector(".qty-display").textContent,
-      );
-      addToCart(productId, selection, quantity);
-      closeProductModal();
+  function updateZoomTransform() {
+    if (zoomImage) {
+      zoomImage.style.transform = `translate(${zoomTranslateX}px, ${zoomTranslateY}px) scale(${zoomScale})`;
+    }
+  }
+
+  function openZoomOverlay(imageSrc) {
+    if (!zoomOverlay || !zoomImage) return;
+    zoomImage.src = imageSrc;
+    zoomScale = 1;
+    zoomTranslateX = 0;
+    zoomTranslateY = 0;
+    updateZoomTransform();
+    zoomOverlay.classList.add("open");
+    document.body.style.overflow = "hidden"; // Lock page scroll
+  }
+
+  function closeZoomOverlay() {
+    if (!zoomOverlay) return;
+    zoomOverlay.classList.remove("open");
+    // Restore body scroll if product modal is not open
+    if (productModal && !productModal.classList.contains("open")) {
+      document.body.style.overflow = "";
+    }
+  }
+
+  if (zoomCloseBtn) {
+    zoomCloseBtn.addEventListener("click", closeZoomOverlay);
+  }
+
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener("click", () => {
+      zoomScale = Math.min(zoomScale + 0.25, 4); // Max 4x scale
+      updateZoomTransform();
+    });
+  }
+
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener("click", () => {
+      zoomScale = Math.max(zoomScale - 0.25, 0.5); // Min 0.5x scale
+      updateZoomTransform();
+    });
+  }
+
+  if (zoomResetBtn) {
+    zoomResetBtn.addEventListener("click", () => {
+      zoomScale = 1;
+      zoomTranslateX = 0;
+      zoomTranslateY = 0;
+      updateZoomTransform();
+    });
+  }
+
+  // Handle drag and pan
+  if (zoomImageContainer) {
+    zoomImageContainer.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      isDraggingZoom = true;
+      startDragX = e.clientX - zoomTranslateX;
+      startDragY = e.clientY - zoomTranslateY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isDraggingZoom) return;
+      zoomTranslateX = e.clientX - startDragX;
+      zoomTranslateY = e.clientY - startDragY;
+      updateZoomTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDraggingZoom = false;
+    });
+
+    // Touch events for mobile dragging
+    zoomImageContainer.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1) {
+        isDraggingZoom = true;
+        startDragX = e.touches[0].clientX - zoomTranslateX;
+        startDragY = e.touches[0].clientY - zoomTranslateY;
+      }
+    }, { passive: true });
+
+    zoomImageContainer.addEventListener("touchmove", (e) => {
+      if (!isDraggingZoom) return;
+      if (e.touches.length === 1) {
+        zoomTranslateX = e.touches[0].clientX - startDragX;
+        zoomTranslateY = e.touches[0].clientY - startDragY;
+        updateZoomTransform();
+      }
+    }, { passive: true });
+
+    zoomImageContainer.addEventListener("touchend", () => {
+      isDraggingZoom = false;
+    });
+  }
+
+  // Close Zoom Overlay on ESC key
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && zoomOverlay && zoomOverlay.classList.contains("open")) {
+      closeZoomOverlay();
     }
   });
+
+  if (productModal) {
+    productModal.addEventListener("click", (e) => {
+      if (e.target.classList.contains("modal-image")) {
+        openZoomOverlay(e.target.src);
+      } else if (e.target.dataset.action === "close-modal") {
+        closeProductModal();
+      } else if (e.target.dataset.action === "decrease-qty") {
+        const qtyDisplay = document.querySelector(".qty-display");
+        let qty = parseInt(qtyDisplay.textContent);
+        if (qty > 1) {
+          qtyDisplay.textContent = qty - 1;
+        }
+      } else if (e.target.dataset.action === "increase-qty") {
+        const qtyDisplay = document.querySelector(".qty-display");
+        qtyDisplay.textContent = parseInt(qtyDisplay.textContent) + 1;
+      } else if (e.target.classList.contains("add-to-cart-btn")) {
+        const productId = parseInt(e.target.dataset.id);
+        const sizeSelect = document.getElementById("size-select");
+        const deviceSelect = document.getElementById("device-select");
+        let selection = "N/A";
+
+        if (sizeSelect) {
+          selection = sizeSelect.value;
+        } else if (deviceSelect) {
+          selection = deviceSelect.value || "N/A";
+        }
+
+        const quantity = parseInt(
+          document.querySelector(".qty-display").textContent,
+        );
+        addToCart(productId, selection, quantity);
+        closeProductModal();
+      }
+    });
+  }
 
   function addToCart(productId, selection, quantity) {
     const action = () => {
@@ -804,10 +1025,383 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  renderProducts();
+  // --- Search Input and Clear Button Event Handlers ---
+  if (gallerySearchInput && searchClearBtn) {
+    gallerySearchInput.addEventListener("input", () => {
+      searchQuery = gallerySearchInput.value;
+      if (searchQuery.trim().length > 0) {
+        searchClearBtn.style.display = "flex";
+      } else {
+        searchClearBtn.style.display = "none";
+      }
+      renderProducts();
+    });
+
+    searchClearBtn.addEventListener("click", () => {
+      gallerySearchInput.value = "";
+      searchQuery = "";
+      searchClearBtn.style.display = "none";
+
+      // Reset tag and category filters
+      activeCategory = "all";
+      activeTag = "all";
+
+      categoryFilters.forEach((f) => f.classList.remove("active"));
+      filterTags.forEach((t) => t.classList.remove("active"));
+      const allTagBtn = Array.from(filterTags).find((t) => t.dataset.filter === "all");
+      if (allTagBtn) {
+        allTagBtn.classList.add("active");
+      }
+
+      renderProducts();
+    });
+  }
+
+  // --- Featured Designs Carousel Component Setup ---
+  const carouselTrack = document.getElementById("carouselTrack");
+  const carouselPrevBtn = document.getElementById("carouselPrevBtn");
+  const carouselNextBtn = document.getElementById("carouselNextBtn");
+  const carouselIndicators = document.getElementById("carouselIndicators");
+
+  if (carouselContainer && carouselTrack) {
+    const slides = Array.from(carouselTrack.children);
+    const slideCount = slides.length;
+    let currentSlide = 0;
+
+    // Generate indicator dots dynamically
+    if (carouselIndicators) {
+      carouselIndicators.innerHTML = "";
+      slides.forEach((_, i) => {
+        const dot = document.createElement("button");
+        dot.className = `indicator-dot ${i === 0 ? "active" : ""}`;
+        dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+        dot.addEventListener("click", () => {
+          goToSlide(i);
+        });
+        carouselIndicators.appendChild(dot);
+      });
+    }
+
+    function updateParallax(index) {
+      // Apply parallax effect to slide images during transition
+      slides.forEach((slide, i) => {
+        const img = slide.querySelector(".slide-img");
+        if (img) {
+          // Slide translation parallax offset. Active slide is at 0 offset.
+          // Slide to the right has positive offset, slide to the left has negative.
+          const offset = (i - index) * 50; // 50px parallax offset
+          img.style.setProperty("--parallax-offset", `${offset}px`);
+        }
+      });
+    }
+
+    function goToSlide(index) {
+      // Wrap around
+      if (index < 0) {
+        currentSlide = slideCount - 1;
+      } else if (index >= slideCount) {
+        currentSlide = 0;
+      } else {
+        currentSlide = index;
+      }
+
+      // Translate track
+      carouselTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+      // Update dots
+      if (carouselIndicators) {
+        const dots = carouselIndicators.querySelectorAll(".indicator-dot");
+        dots.forEach((dot, idx) => {
+          if (idx === currentSlide) {
+            dot.classList.add("active");
+          } else {
+            dot.classList.remove("active");
+          }
+        });
+      }
+
+      // Parallax update
+      updateParallax(currentSlide);
+    }
+
+    // Navigation buttons click listeners
+    if (carouselPrevBtn) {
+      carouselPrevBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        goToSlide(currentSlide - 1);
+      });
+    }
+
+    if (carouselNextBtn) {
+      carouselNextBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        goToSlide(currentSlide + 1);
+      });
+    }
+
+    // Keyboard navigation when container is focused or in view
+    carouselContainer.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        e.stopPropagation();
+        goToSlide(currentSlide - 1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        e.stopPropagation();
+        goToSlide(currentSlide + 1);
+      }
+    });
+
+    // IntersectionObserver to support keyboard navigation when scrolled into view
+    let isCarouselVisible = false;
+    if (typeof IntersectionObserver !== "undefined") {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          isCarouselVisible = entry.isIntersecting;
+        });
+      }, { threshold: 0.4 });
+      observer.observe(carouselContainer);
+    }
+
+    window.addEventListener("keydown", (e) => {
+      // Only trigger global keyboard nav if carousel is visible and active input/textarea is not focused
+      const activeEl = document.activeElement;
+      const isInputFocused = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable);
+      
+      if (isCarouselVisible && !isInputFocused) {
+        if (e.key === "ArrowLeft") {
+          goToSlide(currentSlide - 1);
+        } else if (e.key === "ArrowRight") {
+          goToSlide(currentSlide + 1);
+        }
+      }
+    });
+
+    // Touch & Swipe Logic
+    let startX = 0;
+    let startY = 0;
+    let isSwiping = false;
+
+    carouselTrack.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      isSwiping = true;
+    }, { passive: true });
+
+    carouselTrack.addEventListener("touchmove", (e) => {
+      if (!isSwiping) return;
+      const touch = e.touches[0];
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+
+      // Predominantly horizontal swipe: prevent vertical scrolling
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+      }
+    }, { passive: false });
+
+    carouselTrack.addEventListener("touchend", (e) => {
+      if (!isSwiping) return;
+      isSwiping = false;
+      const touch = e.changedTouches[0];
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+
+      const swipeThreshold = 50; // threshold in pixels
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
+        if (diffX > 0) {
+          goToSlide(currentSlide - 1); // swipe right -> prev slide
+        } else {
+          goToSlide(currentSlide + 1); // swipe left -> next slide
+        }
+      }
+    }, { passive: true });
+
+    // --- Carousel Auto Scroll ---
+    let autoscrollInterval = null;
+
+    function startAutoscroll() {
+      stopAutoscroll();
+      autoscrollInterval = setInterval(() => {
+        goToSlide(currentSlide + 1);
+      }, 4000);
+    }
+
+    function stopAutoscroll() {
+      if (autoscrollInterval) {
+        clearInterval(autoscrollInterval);
+        autoscrollInterval = null;
+      }
+    }
+
+    // Event listeners to pause autoscroll on user interaction
+    carouselContainer.addEventListener("mouseenter", stopAutoscroll);
+    carouselContainer.addEventListener("mouseleave", startAutoscroll);
+    carouselContainer.addEventListener("touchstart", stopAutoscroll, { passive: true });
+    carouselContainer.addEventListener("touchend", startAutoscroll, { passive: true });
+    carouselContainer.addEventListener("focusin", stopAutoscroll);
+    carouselContainer.addEventListener("focusout", startAutoscroll);
+
+    // Initialize parallax offsets and start autoscroll
+    updateParallax(0);
+    startAutoscroll();
+  }
+
+  // --- Carousel Details Link Navigation ---
+  if (carouselContainer) {
+    carouselContainer.addEventListener("click", (e) => {
+      const detailsBtn = e.target.closest(".view-details-btn");
+      if (detailsBtn) {
+        e.preventDefault();
+        const id = parseInt(detailsBtn.dataset.id);
+        window.location.href = `product.html?id=${id}`;
+      }
+    });
+  }
+
+  // --- Product Detail Page (PDP) Dynamic Data Loader ---
+  const pdpContainer = document.getElementById("productDetailContainer");
+  if (pdpContainer) {
+    const pdpSkeleton = document.getElementById("pdpSkeleton");
+    const productNotFound = document.getElementById("productNotFound");
+    const pdpProductImage = document.getElementById("pdpProductImage");
+    const pdpProductTitle = document.getElementById("pdpProductTitle");
+    const pdpProductPrice = document.getElementById("pdpProductPrice");
+    const pdpProductDesc = document.getElementById("pdpProductDesc");
+    const pdpSelectorContainer = document.getElementById("pdpSelectorContainer");
+    const pdpQtyDec = document.getElementById("pdpQtyDec");
+    const pdpQtyInc = document.getElementById("pdpQtyInc");
+    const pdpQtyDisplay = document.getElementById("pdpQtyDisplay");
+    const pdpAddToCartBtn = document.getElementById("pdpAddToCartBtn");
+    const pdpWishlistBtn = document.getElementById("pdpWishlistBtn");
+
+    // 1. Get Product ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = parseInt(urlParams.get("id"));
+    const product = products.find((p) => p.id === productId);
+
+    if (pdpSkeleton) pdpSkeleton.style.display = "none";
+
+    if (product) {
+      // Show product details container
+      pdpContainer.style.display = "grid";
+
+      // Inject data
+      if (pdpProductTitle) pdpProductTitle.textContent = product.name;
+      if (pdpProductPrice) pdpProductPrice.textContent = `₹${product.price}`;
+      if (pdpProductDesc) {
+        if (product.category === "T-Shirts" || product.category === "Hoodies") {
+          pdpProductDesc.textContent = `${product.name} - Custom fit graphic apparel designed with high-quality screenprinting. Crafted with 100% premium soft-combed cotton for maximum aesthetic appeal, breathability, and all-day comfort.`;
+        } else if (product.category === "Mugs") {
+          pdpProductDesc.textContent = `${product.name} - Minimalist ceramic design mug with gloss finish. Microwave and dishwasher safe, perfect for morning coffee, evening tea, and coding sprints.`;
+        } else {
+          pdpProductDesc.textContent = `${product.name} - Sleek protective cover built with premium shockproof TPU borders and a high-resolution gloss graphic backplate, designed to guard your device without adding bulk.`;
+        }
+      }
+      if (pdpProductImage) {
+        pdpProductImage.src = product.image;
+        pdpProductImage.alt = product.name;
+        // Wire up tap-to-zoom fullscreen overlay
+        pdpProductImage.addEventListener("click", () => {
+          openZoomOverlay(product.image);
+        });
+      }
+
+      // Dynamically update document title
+      document.title = `.studio | ${product.name}`;
+
+      // Render selectors (Device or Size)
+      const isCover = product.category === "Phone Covers" || product.category === "iPad Covers";
+      const isMug = product.category === "Mugs";
+      if (pdpSelectorContainer) {
+        if (isCover) {
+          pdpSelectorContainer.innerHTML = renderDeviceSelector(product.category);
+        } else if (!isMug) {
+          pdpSelectorContainer.innerHTML = renderSizeSelector();
+        }
+      }
+
+      // Wishlist active state check
+      const wishlistSet = new Set(wishlist);
+      if (pdpWishlistBtn) {
+        if (wishlistSet.has(product.id)) {
+          pdpWishlistBtn.classList.add("active");
+        }
+        
+        pdpWishlistBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = product.id;
+          const index = wishlist.indexOf(id);
+          if (index > -1) {
+            wishlist.splice(index, 1);
+            pdpWishlistBtn.classList.remove("active");
+            showNotification("Removed from wishlist");
+          } else {
+            wishlist.push(id);
+            pdpWishlistBtn.classList.add("active");
+            showNotification("Added to wishlist");
+          }
+          saveState();
+          renderWishlist();
+          updateWishlistBadge();
+        });
+      }
+
+      // Quantity selector event listeners
+      let quantity = 1;
+      if (pdpQtyDec) {
+        pdpQtyDec.addEventListener("click", () => {
+          if (quantity > 1) {
+            quantity--;
+            pdpQtyDisplay.textContent = quantity;
+          }
+        });
+      }
+      if (pdpQtyInc) {
+        pdpQtyInc.addEventListener("click", () => {
+          quantity++;
+          pdpQtyDisplay.textContent = quantity;
+        });
+      }
+
+      // Add to Cart event listener
+      if (pdpAddToCartBtn) {
+        pdpAddToCartBtn.addEventListener("click", () => {
+          const sizeSelect = document.getElementById("size-select");
+          const deviceSelect = document.getElementById("device-select");
+          let selection = "N/A";
+          if (sizeSelect) {
+            selection = sizeSelect.value;
+          } else if (deviceSelect) {
+            selection = deviceSelect.value || "N/A";
+          }
+
+          addToCart(product.id, selection, quantity);
+          
+          // Open cart sidebar automatically
+          if (cartSidebar && sidebarOverlay) {
+            cartSidebar.classList.add("open");
+            sidebarOverlay.classList.add("active");
+          }
+        });
+      }
+
+    } else {
+      // Show elegant "Product Not Found" screen
+      if (productNotFound) productNotFound.style.display = "flex";
+      document.title = ".studio | Product Not Found";
+    }
+  }
+
+  if (productsGrid) {
+    renderProducts();
+    renderCouples();
+  }
   renderCart();
   renderWishlist();
-  renderCouples();
   updateCartBadge();
   updateWishlistBadge();
 });

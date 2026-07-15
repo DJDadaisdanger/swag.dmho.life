@@ -1,0 +1,136 @@
+<!doctypehtml>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Intellectual Designs for Cool People. Reusable Product Detail Page.">
+  <title>.studio | Product Details</title>
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+  <header class="header">
+    <nav class="nav-container">
+      <a href="/" class="logo" style="text-decoration: none; color: #fff;">.studio</a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="/#gallery" data-testid="nav-gallery">Gallery</a></li>
+        <li><a href="/#couples" data-testid="nav-couples">Couples</a></li>
+        <li><a href="/#custom" data-testid="nav-custom">Custom & Contact</a></li>
+      </ul>
+      <div class="nav-icons">
+        <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu" data-testid="mobile-menu-btn">
+          <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button> 
+        <button class="icon-btn" id="wishlistBtn" data-testid="wishlist-btn" aria-label="Wishlist">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg> 
+          <span class="badge" id="wishlistBadge" data-testid="wishlist-count" style="display:none">0</span>
+        </button> 
+        <button class="icon-btn" id="cartBtn" data-testid="cart-btn" aria-label="Shopping Cart">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg> 
+          <span class="badge" id="cartBadge" data-testid="cart-count" style="display:none">0</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+  <main>
+    <div class="pdp-back-nav">
+      <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Shop</a>
+    </div>
+
+    <!-- Skeleton Loader -->
+    <div id="pdpSkeleton" class="skeleton-loader-container">
+      <div class="skeleton-grid">
+        <div class="skeleton-image"></div>
+        <div class="skeleton-details">
+          <div class="skeleton-title"></div>
+          <div class="skeleton-price"></div>
+          <div class="skeleton-text"></div>
+          <div class="skeleton-text"></div>
+          <div class="skeleton-btn"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fallback / Error State Container -->
+    <div id="productNotFound" class="not-found-container" style="display: none;">
+      <i class="fas fa-exclamation-triangle not-found-icon"></i>
+      <h2>Product Not Found</h2>
+      <p>We couldn't find the product you're looking for. It may have been removed or the link is invalid.</p>
+      <a href="/" class="back-home-btn">Return to Shop</a>
+    </div>
+
+    <!-- Main Dynamic PDP Container -->
+    <div id="productDetailContainer" class="pdp-container" style="display: none;">
+      <div class="pdp-image-section">
+        <div class="pdp-image-wrapper">
+          <img id="pdpProductImage" src="" alt="Product Image" class="modal-image">
+        </div>
+      </div>
+      <div class="pdp-details-section">
+        <h1 id="pdpProductTitle" class="pdp-title"></h1>
+        <p id="pdpProductPrice" class="pdp-price"></p>
+        <p id="pdpProductDesc" class="pdp-desc"></p>
+        
+        <div id="pdpSelectorContainer">
+          <!-- Dynamic Device or Size Selector Injected Here -->
+        </div>
+        
+        <div class="quantity-selector" style="margin-top: 1rem;">
+          <label style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Quantity</label>
+          <div class="quantity-controls">
+            <button class="qty-btn" id="pdpQtyDec" data-action="decrease-qty">-</button>
+            <span class="qty-display" id="pdpQtyDisplay">1</span>
+            <button class="qty-btn" id="pdpQtyInc" data-action="increase-qty">+</button>
+          </div>
+        </div>
+        
+        <div class="pdp-actions">
+          <button class="add-to-cart-btn pdp-add-cart-btn" id="pdpAddToCartBtn">Add to Cart</button>
+          <button class="wishlist-btn pdp-wishlist-btn" id="pdpWishlistBtn" aria-label="Add to Wishlist">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="sidebar" id="cartSidebar" data-testid="cart-sidebar"></div>
+  <div class="sidebar" id="wishlistSidebar" data-testid="wishlist-sidebar"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Image Fullscreen Zoom Overlay -->
+  <div id="imageZoomOverlay" class="zoom-overlay">
+    <button class="zoom-close-btn" id="zoomCloseBtn" aria-label="Close zoom">&times;</button>
+    <div class="zoom-image-container" id="zoomImageContainer">
+      <img id="zoomOverlayImage" src="" alt="Zoomed view">
+    </div>
+    <div class="zoom-controls">
+      <button class="zoom-control-btn" id="zoomOutBtn" aria-label="Zoom out"><i class="fas fa-search-minus"></i></button>
+      <button class="zoom-control-btn" id="zoomResetBtn" aria-label="Restore zoom"><i class="fas fa-sync-alt"></i> Fit</button>
+      <button class="zoom-control-btn" id="zoomInBtn" aria-label="Zoom in"><i class="fas fa-search-plus"></i></button>
+    </div>
+  </div>
+
+  <footer class="footer" data-testid="footer">
+    <div class="container">
+      <p data-testid="footer-text">© 2026 DJDada. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/utils.js" defer="defer"></script>
+  <script src="js/app.js" defer="defer"></script>
+</body>
+</html>
