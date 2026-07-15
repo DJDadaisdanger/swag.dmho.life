@@ -145,57 +145,97 @@ const BackendAPI = {
   async getUserData() {
     let wishlist = [];
     let cart = [];
-    let isLoggedIn = getCookie("isLoggedIn") === "true";
+    let isLoggedIn = false;
     let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
+    let userEmail = null;
 
+    // Always verify auth status from server
     try {
-      const storedWishlist = localStorage.getItem('wishlist') || getCookie("wishlist");
-      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
-
-      const storedCart = localStorage.getItem('cart') || getCookie("cart");
-      if (storedCart) cart = JSON.parse(storedCart);
+      const meRes = await fetch("/api/me");
+      const me = await meRes.json();
+      if (me.authenticated) {
+        isLoggedIn = true;
+        userEmail = me.email;
+        // Load server-side cart/wishlist
+        const cartRes = await fetch("/api/cart");
+        if (cartRes.ok) {
+          const data = await cartRes.json();
+          cart = data.cart || [];
+          wishlist = data.wishlist || [];
+          // Mirror to localStorage so offline use still works
+          localStorage.setItem("cart", JSON.stringify(cart));
+          localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        }
+        return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt, userEmail };
+      }
     } catch (e) {
-      console.error("Error parsing stored data", e);
     }
 
-    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt };
+    // Fallback: load from localStorage when not logged in or server unreachable
+    try {
+      const storedWishlist = localStorage.getItem("wishlist");
+      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
+      const storedCart = localStorage.getItem("cart");
+      if (storedCart) cart = JSON.parse(storedCart);
+    } catch (e) {
+    }
+
+    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt, userEmail };
   },
 
-  async login() {
-    // TODO: [Backend Integration] Integrate OAuth 2.0 to handle authentication securely and store session tokens
-    // instead of local dummy variables. User data (cart/wishlist) should be fetched from the SQLite database
-    // upon successful login via the Python backend.
-    setCookie("isLoggedIn", "true");
-    setCookie("hasSeenLoginPrompt", "true");
-    return true;
+  async register(email, password, phone) {
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, phone }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Registration failed");
+    return data;
+  },
+
+  async login(email, password) {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Invalid email or password");
+    return data;
+  },
+
+  async logout() {
+    await fetch("/api/logout", { method: "POST" });
+    localStorage.removeItem("cart");
+    localStorage.removeItem("wishlist");
   },
 
   async syncData(cart, wishlist, isLoggedIn) {
-    // TODO: [Backend Integration] Sync cart and wishlist with Python backend / SQLite DB here.
-    // Cookies are being used for placeholder frontend persistence. In production, use HttpOnly cookies for Auth.
     localStorage.setItem("cart", JSON.stringify(cart));
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
-    setCookie("cart", JSON.stringify(cart));
-    setCookie("wishlist", JSON.stringify(wishlist));
 
     if (isLoggedIn) {
-      // TODO: [Backend Developer] Implement the /api/sync endpoint in the Python backend to receive and save this data to SQLite.
       try {
         await fetch("/api/sync", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ cart, wishlist }),
         });
       } catch (error) {
-        console.error("Error syncing state with backend:", error);
       }
     }
-  }
+  },
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
+  function debounce(func, delay) {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func(...args), delay);
+    };
+  }
   const productsGrid = document.getElementById("productsGrid");
   const filterTags = document.querySelectorAll(".filter-tag");
   const categoryFilters = document.querySelectorAll(".category-filter");
@@ -215,6 +255,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   let cart = userData.cart;
   let isLoggedIn = userData.isLoggedIn;
   let hasSeenLoginPrompt = userData.hasSeenLoginPrompt;
+  let userEmail = userData.userEmail || null;
+
+  if (isLoggedIn) {
+    document.body.classList.add('logged-in');
+  }
+
+  if (new URLSearchParams(window.location.search).get('login') === 'true') {
+    setTimeout(() => showLoginPrompt(), 100);
+  }
+
   let activeCategory = "all";
   let activeTag = "all";
   const gallerySearchInput = document.getElementById("gallerySearchInput");
@@ -223,6 +273,60 @@ document.addEventListener("DOMContentLoaded", async () => {
   const categoriesSection = document.getElementById("categoriesSection");
   let searchQuery = "";
 
+  // --- Filter Bar Scroll Logic ---
+  const filterScrollNextBtn = document.getElementById("filterScrollNextBtn");
+  const filterScrollPrevBtn = document.getElementById("filterScrollPrevBtn");
+  const filterBar = document.querySelector(".filter-bar");
+
+  if (filterBar) {
+    filterBar.style.scrollbarWidth = "none";
+
+    const updateScrollButtons = () => {
+      if (!filterScrollNextBtn || !filterScrollPrevBtn) return;
+      const isAtStart = filterBar.scrollLeft <= 5;
+      const isAtEnd = Math.abs(filterBar.scrollWidth - filterBar.clientWidth - filterBar.scrollLeft) <= 5;
+
+      filterScrollPrevBtn.style.opacity = isAtStart ? "0" : "1";
+      filterScrollPrevBtn.style.pointerEvents = isAtStart ? "none" : "auto";
+      filterScrollNextBtn.style.opacity = isAtEnd ? "0" : "1";
+      filterScrollNextBtn.style.pointerEvents = isAtEnd ? "none" : "auto";
+    };
+
+    if (filterScrollNextBtn) filterScrollNextBtn.addEventListener("click", () => filterBar.scrollBy({ left: 200, behavior: "smooth" }));
+    if (filterScrollPrevBtn) filterScrollPrevBtn.addEventListener("click", () => filterBar.scrollBy({ left: -200, behavior: "smooth" }));
+
+    let isDraggingFilter = false;
+    let startXFilter;
+    let scrollLeftFilter;
+
+    filterBar.addEventListener("mousedown", (e) => {
+      isDraggingFilter = true;
+      startXFilter = e.pageX - filterBar.offsetLeft;
+      scrollLeftFilter = filterBar.scrollLeft;
+    });
+
+    filterBar.addEventListener("mouseleave", () => isDraggingFilter = false);
+    filterBar.addEventListener("mouseup", () => isDraggingFilter = false);
+    filterBar.addEventListener("mousemove", (e) => {
+      if (!isDraggingFilter) return;
+      e.preventDefault();
+      const x = e.pageX - filterBar.offsetLeft;
+      filterBar.scrollLeft = scrollLeftFilter - (x - startXFilter) * 1.5;
+    });
+
+    let scrollTicking = false;
+    filterBar.addEventListener("scroll", () => {
+      if (!scrollTicking) {
+        window.requestAnimationFrame(() => {
+          updateScrollButtons();
+          scrollTicking = false;
+        });
+        scrollTicking = true;
+      }
+    });
+    window.addEventListener("resize", updateScrollButtons);
+    setTimeout(updateScrollButtons, 100);
+  }
   function getSidebarHeaderHTML(title, action) {
     return `
                 <div class="sidebar-header">
@@ -270,51 +374,180 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function createLoginPromptModal() {
-    const modal = document.createElement("div");
-    modal.id = "loginPromptModal";
-    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:6000;display:flex;align-items:center;justify-content:center;";
-    modal.innerHTML = `
-      <div style="background:#1a1a1a;border:1px solid #333;border-radius:16px;padding:2rem;max-width:380px;width:90%;text-align:center;">
-        <h3 style="color:#fff;margin-bottom:1rem;">Welcome!</h3>
-        <p style="color:#aaa;margin-bottom:1.5rem;">Sign in to save your cart and wishlist across sessions.</p>
-        <div style="display:flex;gap:1rem;justify-content:center;">
-          <button id="loginPromptSignIn" style="background:#3b82f6;color:#fff;border:none;padding:0.7rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;">Sign In</button>
-          <button id="loginPromptNvm" style="background:#2a2a2a;color:#ccc;border:1px solid #333;padding:0.7rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;">Not Now</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(modal);
+  const loginSidebar = document.getElementById("loginSidebar");
+  const loginForm = document.getElementById("loginForm");
 
-    document.getElementById("loginPromptSignIn").addEventListener("click", async () => {
-      await BackendAPI.login();
-      isLoggedIn = true;
-      hasSeenLoginPrompt = true;
-      modal.remove();
-      processLoginQueue(true);
+  function openLoginSlide() {
+    loginSidebar.classList.add("open");
+    sidebarOverlay.classList.add("active");
+  }
+
+  function closeLoginSlide() {
+    loginSidebar.classList.remove("open");
+    sidebarOverlay.classList.remove("active");
+  }
+
+  if (loginSidebar) {
+    loginSidebar.addEventListener("click", (e) => {
+      if (e.target.dataset.action === "close-login") {
+        closeLoginSlide();
+        processLoginQueue(false);
+      }
     });
+  }
 
-    document.getElementById("loginPromptNvm").addEventListener("click", () => {
-      hasSeenLoginPrompt = true;
-      setCookie("hasSeenLoginPrompt", "true");
-      modal.remove();
-      processLoginQueue(false);
+  // --- Nav user display ---
+  function renderNavUser() {
+    const navIcons = document.querySelector(".nav-icons");
+    if (!navIcons) return;
+    const existing = document.getElementById("navUserPill");
+    if (existing) existing.remove();
+    if (isLoggedIn && userEmail) {
+      const pill = document.createElement("div");
+      pill.id = "navUserPill";
+      pill.className = "nav-user-pill";
+      pill.innerHTML = `
+        <span class="nav-user-email">${escapeHTML(userEmail)}</span>
+        <button class="nav-logout-btn" id="logoutBtn" aria-label="Logout">Sign out</button>
+      `;
+      navIcons.prepend(pill);
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await BackendAPI.logout();
+        isLoggedIn = false;
+        userEmail = null;
+        cart = [];
+        wishlist = [];
+        document.body.classList.remove('logged-in');
+        renderNavUser();
+        renderCart();
+        renderWishlist();
+        updateCartBadge();
+        updateWishlistBadge();
+        renderProducts();
+      });
+    }
+  }
+
+  // --- Auth form: login + register tab logic ---
+  const loginSidebarEl = loginSidebar;
+  const authTabBtns = loginSidebarEl ? loginSidebarEl.querySelectorAll(".auth-tab-btn") : [];
+  const loginPanel = loginSidebarEl ? loginSidebarEl.querySelector("#loginPanel") : null;
+  const registerPanel = loginSidebarEl ? loginSidebarEl.querySelector("#registerPanel") : null;
+
+  authTabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      authTabBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const target = btn.dataset.tab;
+      if (loginPanel) loginPanel.style.display = target === "login" ? "flex" : "none";
+      if (registerPanel) registerPanel.style.display = target === "register" ? "flex" : "none";
+      // clear errors
+      loginSidebarEl.querySelectorAll(".auth-error").forEach(el => el.remove());
+    });
+  });
+
+  // Helper: handle successful auth
+  async function onAuthSuccess() {
+    const meRes = await fetch("/api/me");
+    const me = await meRes.json();
+    if (!me.authenticated) return;
+    isLoggedIn = true;
+    userEmail = me.email;
+    hasSeenLoginPrompt = true;
+    document.body.classList.add('logged-in');
+
+    // Load server cart/wishlist
+    try {
+      const cartRes = await fetch("/api/cart");
+      if (cartRes.ok) {
+        const d = await cartRes.json();
+        cart = d.cart || [];
+        wishlist = d.wishlist || [];
+        localStorage.setItem("cart", JSON.stringify(cart));
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      }
+    } catch (_) { }
+    renderNavUser();
+    closeLoginSlide();
+    processLoginQueue(true);
+    renderCart();
+    renderWishlist();
+    updateCartBadge();
+    updateWishlistBadge();
+  }
+
+  // Login form
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const submitBtn = loginForm.querySelector("button[type='submit']");
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Signing in…";
+      submitBtn.disabled = true;
+      loginForm.querySelectorAll(".auth-error").forEach(el => el.remove());
+      try {
+        await BackendAPI.login(email, password);
+        await onAuthSuccess();
+      } catch (err) {
+        const msg = document.createElement("p");
+        msg.className = "auth-error";
+        msg.textContent = err.message || "Invalid email or password.";
+        loginForm.appendChild(msg);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  // Register form
+  const registerForm = loginSidebarEl ? loginSidebarEl.querySelector("#registerForm") : null;
+  if (registerForm) {
+    registerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const phone = document.getElementById("regPhone").value.trim();
+      const regPhoneError = document.getElementById("reg-phone-error");
+
+      // Validate 10-digit phone number
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(phone)) {
+        if (regPhoneError) regPhoneError.style.display = "block";
+        return;
+      } else {
+        if (regPhoneError) regPhoneError.style.display = "none";
+      }
+
+      const submitBtn = registerForm.querySelector("button[type='submit']");
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Creating account…";
+      submitBtn.disabled = true;
+      registerForm.querySelectorAll(".auth-error").forEach(el => el.remove());
+      try {
+        await BackendAPI.register(email, password, phone);
+        await onAuthSuccess();
+      } catch (err) {
+        const msg = document.createElement("p");
+        msg.className = "auth-error";
+        msg.textContent = err.message || "Registration failed. Try again.";
+        registerForm.appendChild(msg);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
     });
   }
 
   function showLoginPrompt(onLogin, onNvm) {
-    if (isLoggedIn || hasSeenLoginPrompt) {
-      if (onNvm) onNvm();
+    if (isLoggedIn) {
+      if (onLogin) onLogin();
       return;
     }
-
-    if (document.getElementById("loginPromptModal")) {
-      enqueueLoginAction(onLogin, onNvm);
-      return;
-    }
-
     enqueueLoginAction(onLogin, onNvm);
-    createLoginPromptModal();
+    openLoginSlide();
   }
 
   function getSelection(product) {
@@ -327,25 +560,58 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function showNotification(message) {
+    let container = document.getElementById("notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "notification-container";
+      container.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column-reverse;gap:10px;pointer-events:none;";
+      document.body.appendChild(container);
+    }
+
     const notification = document.createElement("div");
-    notification.className = "success-message";
+    notification.style.cssText = "padding:1rem 1.5rem;width:auto;max-width:300px;height:auto;background:#10b981;color:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;flex-shrink:0;pointer-events:auto;transition:all 0.3s ease;opacity:0;transform:translateY(10px);";
+
     const safeMessage = escapeHTML(message);
-    notification.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1"></circle>
-          <circle cx="20" cy="21" r="1"></circle>
-          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-        </svg>
-        <span>${safeMessage}</span>
-      </div>
+    
+    let icon = `
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; min-width: 24px;">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+      </svg>
     `;
-    notification.querySelector("span").textContent = message;
-    document.body.appendChild(notification);
+    if (message.toLowerCase().includes("wishlist")) {
+      icon = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; min-width: 24px;">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      `;
+    }
+
+    notification.innerHTML = `
+      ${icon}
+      <span style="white-space: nowrap;">${safeMessage}</span>
+    `;
+
+    container.appendChild(notification);
+    
+    // Trigger animation frame for transition
+    requestAnimationFrame(() => {
+      notification.style.opacity = "1";
+      notification.style.transform = "translateY(0)";
+    });
+
     setTimeout(() => {
-      if (document.body.contains(notification)) {
-        notification.remove();
-      }
+      notification.style.opacity = "0";
+      notification.style.transform = "translateY(10px)";
+      setTimeout(() => {
+        if (container.contains(notification)) {
+          notification.remove();
+        }
+        if (container.childNodes.length === 0) {
+          container.remove();
+        }
+      }, 300);
     }, 3000);
   }
 
@@ -355,7 +621,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function renderProducts() {
     const query = searchQuery.trim().toLowerCase();
-    
+
     // Hide carousel and category sections during active search queries
     const hasQuery = query.length > 0;
     if (carouselContainer) {
@@ -369,8 +635,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const categoryMatch =
         activeCategory === "all" || product.category === activeCategory;
       const tagMatch = activeTag === "all" || product.tags.includes(activeTag);
-      const searchMatch = !query || 
-        product.name.toLowerCase().includes(query) || 
+      const searchMatch = !query ||
+        product.name.toLowerCase().includes(query) ||
         product.category.toLowerCase().includes(query);
       return categoryMatch && tagMatch && searchMatch;
     });
@@ -378,34 +644,60 @@ document.addEventListener("DOMContentLoaded", async () => {
     const wishlistSet = new Set(wishlist);
 
     if (productsGrid) {
-      productsGrid.innerHTML = filteredProducts
-        .map((product) => {
-          const highlightedName = highlightText(product.name, query);
-          return `
-                  <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                      <button class="wishlist-btn ${
-                        wishlistSet.has(product.id) ? "active" : ""
-                      }">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                          </svg>
-                      </button>
-                      <div class="product-image-wrapper">
-                          <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="product-image">
-                      </div>
-                      <div class="product-info">
-                          <div>
-                              <h3 class="product-name">${highlightedName}</h3>
-                          </div>
-                          <div class="product-meta">
-                              <span class="product-price">₹${product.price}</span>
-                              <span class="product-status">In Stock</span>
-                          </div>
-                      </div>
-                  </div>
-              `;
-        })
-        .join("");
+      if (filteredProducts.length === 0) {
+        if (hasQuery) {
+          // Search empty state
+          productsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+              <svg width="48" height="48" fill="none" stroke="#555" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 1rem;">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.25rem;">No products match your search</h3>
+              <p style="color: #888;">Try checking the spelling or using different keywords.</p>
+            </div>
+          `;
+        } else {
+          // Category/Filter empty state
+          productsGrid.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
+              <svg width="48" height="48" fill="none" stroke="#555" stroke-width="1.5" viewBox="0 0 24 24" style="margin-bottom: 1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+              <h3 style="color: #fff; margin-bottom: 0.5rem; font-size: 1.25rem;">Nothing available</h3>
+              <p style="color: #888;">We don't have any designs in this category right now.</p>
+            </div>
+          `;
+        }
+      } else {
+        productsGrid.innerHTML = filteredProducts
+          .map((product) => {
+            const highlightedName = highlightText(product.name, query);
+            return `
+                    <div class="product-card" data-id="${product.id}" data-action="open-modal">
+                        <button class="wishlist-btn ${wishlistSet.has(product.id) ? "active" : ""
+              }">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <div class="product-image-wrapper">
+                            <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="product-image" width="300" height="300" loading="lazy">
+                        </div>
+                        <div class="product-info">
+                            <div>
+                                <h3 class="product-name">${highlightedName}</h3>
+                            </div>
+                            <div class="product-meta">
+                                <span class="product-price">₹${product.price}</span>
+                                <span class="product-status">In Stock</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+      }
     }
   }
 
@@ -515,7 +807,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <button class="modal-close close-btn" data-action="close-modal">&times;</button>
                 <div class="modal-body">
                     <div class="modal-product">
-                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="modal-image" width="600" height="600">
                         <div class="modal-details">
                             <h2>${safeName}</h2>
                             <p class="product-price">₹${product.price}</p>
@@ -727,20 +1019,18 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <h3>${title}</h3>
                     <button class="close-btn" data-action="${closeAction}">&times;</button>
                 </div>
-                ${
-                  itemsHTML
-                    ? `<div class="sidebar-items">${itemsHTML}</div>`
-                    : `<div class="sidebar-empty">
+                ${itemsHTML
+        ? `<div class="sidebar-items">${itemsHTML}</div>`
+        : `<div class="sidebar-empty">
                     <p>${emptyMessage}</p>
                 </div>`
-                }
-                ${
-                  footerHTML
-                    ? `<div class="sidebar-footer">
+      }
+                ${footerHTML
+        ? `<div class="sidebar-footer">
                     ${footerHTML}
                 </div>`
-                    : ""
-                }
+        : ""
+      }
             `;
   }
 
@@ -753,12 +1043,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         .map((item) => {
           const product = productMap[item.id];
           return `
-                    <div class="cart-item" data-id="${
-                      item.id
-                    }" data-selection="${escapeHTML(item.selection)}">
-                        <img src="${
-                          escapeHTML(product.image)
-                        }" alt="${escapeHTML(product.name)}" class="cart-item-img">
+                    <div class="cart-item" data-id="${item.id
+            }" data-selection="${escapeHTML(item.selection)}">
+                        <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" class="cart-item-img" width="80" height="80">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${escapeHTML(product.name)}</p>
                             <p class="cart-item-size">${escapeHTML(item.selection)}</p>
@@ -809,16 +1096,26 @@ document.addEventListener("DOMContentLoaded", async () => {
           const safeName = escapeHTML(product.name);
           return `
                     <div class="cart-item" data-id="${product.id}">
-                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img">
+                        <img src="${escapeHTML(product.image)}" alt="${safeName}" class="cart-item-img" width="80" height="80">
                         <div class="cart-item-details">
                             <p class="cart-item-name">${safeName}</p>
                             <p class="cart-item-price">₹${product.price}</p>
-                             <button class="remove-btn" data-action="remove-from-wishlist">Remove</button>
+                            <div style="display:flex;gap:0.5rem;margin-top:0.5rem;align-items:center;">
+                                <button class="remove-btn" data-action="remove-from-wishlist" style="margin:0;padding:0.25rem 0.5rem;min-height:30px;min-width:auto;">Remove</button>
+                                <button class="checkout-btn" data-action="wishlist-add-to-cart" style="margin:0;padding:0.25rem 0.5rem;font-size:0.8rem;min-height:30px;width:auto;background:#3b82f6;">Add to Cart</button>
+                            </div>
                         </div>
                     </div>
                 `;
         })
         .join("");
+    }
+
+    let footerHTML = "";
+    if (wishlist.length > 0) {
+      footerHTML = `<button class="checkout-btn" data-action="wishlist-move-all" style="background:#10b981;">Move All to Cart</button>`;
+    } else if (!isLoggedIn) {
+      footerHTML = '<button class="checkout-btn" data-action="login">Sign in to save</button>';
     }
 
     renderSidebar({
@@ -827,7 +1124,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       closeAction: "close-wishlist",
       emptyMessage: "Your wishlist is empty",
       itemsHTML,
-      footerHTML: '<button class="checkout-btn">Sign in to save</button>',
+      footerHTML,
     });
   }
 
@@ -888,7 +1185,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderCart();
       updateCartBadge();
     } else if (e.target.dataset.action === "checkout") {
-      window.location.href = "checkout.html";
+      showLoginPrompt(() => {
+        window.location.href = "checkout.html";
+      });
     }
   });
 
@@ -903,12 +1202,63 @@ document.addEventListener("DOMContentLoaded", async () => {
         productId,
         document.getElementById(`wishlist-btn-${productId}`),
       );
+    } else if (e.target.dataset.action === "wishlist-add-to-cart") {
+      const cartItem = e.target.closest(".cart-item");
+      const productId = parseInt(cartItem.dataset.id);
+      const product = productMap[productId];
+      const selection = getSelection(product);
+      
+      addToCart(productId, selection, 1);
+      
+      wishlist = wishlist.filter(id => id !== productId);
+      const wishlistBtn = document.getElementById(`wishlist-btn-${productId}`);
+      if (wishlistBtn) wishlistBtn.classList.remove("active");
+      
+      saveState();
+      renderWishlist();
+      updateWishlistBadge();
+    } else if (e.target.dataset.action === "wishlist-move-all") {
+      wishlist.forEach(productId => {
+        const product = productMap[productId];
+        const selection = getSelection(product);
+        
+        let existingItem = null;
+        for (let i = 0; i < cart.length; i++) {
+          if (cart[i].id === productId && cart[i].selection === selection) {
+            existingItem = cart[i];
+            break;
+          }
+        }
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cart.push({ id: productId, selection, quantity: 1 });
+        }
+        
+        const wishlistBtn = document.getElementById(`wishlist-btn-${productId}`);
+        if (wishlistBtn) wishlistBtn.classList.remove("active");
+      });
+      
+      wishlist = [];
+      saveState();
+      renderWishlist();
+      renderCart();
+      updateWishlistBadge();
+      updateCartBadge();
+      showNotification("All items moved to cart");
+    } else if (e.target.dataset.action === "login") {
+      wishlistSidebar.classList.remove("open");
+      showLoginPrompt();
     }
   });
 
   sidebarOverlay.addEventListener("click", () => {
     cartSidebar.classList.remove("open");
     wishlistSidebar.classList.remove("open");
+    if (loginSidebar) {
+      loginSidebar.classList.remove("open");
+      processLoginQueue(false);
+    }
     sidebarOverlay.classList.remove("active");
   });
 
@@ -927,18 +1277,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   filterTags.forEach((tag) => {
     tag.addEventListener("click", () => {
-      filterTags.forEach((t) => t.classList.remove("active"));
-      tag.classList.add("active");
-      activeTag = tag.dataset.filter;
+      if (tag.classList.contains("active") && tag.dataset.filter !== "all") {
+        tag.classList.remove("active");
+        activeTag = "all";
+        const allBtn = Array.from(filterTags).find(t => t.dataset.filter === "all");
+        if (allBtn) allBtn.classList.add("active");
+      } else {
+        filterTags.forEach((t) => t.classList.remove("active"));
+        tag.classList.add("active");
+        activeTag = tag.dataset.filter;
+      }
       renderProducts();
     });
   });
 
   categoryFilters.forEach((filter) => {
     filter.addEventListener("click", () => {
-      categoryFilters.forEach((f) => f.classList.remove("active"));
-      filter.classList.add("active");
-      activeCategory = filter.dataset.category;
+      if (filter.classList.contains("active")) {
+        filter.classList.remove("active");
+        // Reset styles
+        filter.style.backgroundColor = "";
+        filter.style.boxShadow = "";
+        activeCategory = "all";
+      } else {
+        categoryFilters.forEach((f) => {
+          f.classList.remove("active");
+          f.style.backgroundColor = "";
+          f.style.boxShadow = "";
+        });
+        filter.classList.add("active");
+        // Use a subtle transparent blue background + an inner blue border
+        filter.style.backgroundColor = "rgba(59, 130, 246, 0.1)";
+        filter.style.boxShadow = "inset 0 0 0 2px #3b82f6";
+        activeCategory = filter.dataset.category;
+      }
       renderProducts();
     });
   });
@@ -979,10 +1351,10 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="couple-card">
                     <div class="couple-products">
                         <div class="couple-product-wrapper">
-                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img">
+                            <img src="${safeImage1}" alt="${safeName1}" class="couple-product-img" width="200" height="200" loading="lazy">
                         </div>
                         <div class="couple-product-wrapper">
-                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img">
+                            <img src="${safeImage2}" alt="${safeName2}" class="couple-product-img" width="200" height="200" loading="lazy">
                         </div>
                     </div>
                     <div>
@@ -992,15 +1364,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="bundle-price-row">
                         <div>
                             <span class="old-price">₹${(
-                              item1.price + item2.price
-                            ).toFixed(2)}</span>
+            item1.price + item2.price
+          ).toFixed(2)}</span>
                             <span class="bundle-price">₹${bundlePrice.toFixed(
-                              2,
-                            )}</span>
+            2,
+          )}</span>
                         </div>
-                        <button class="bundle-btn" data-id1="${
-                          item1.id
-                        }" data-id2="${item2.id}">Add Bundle</button>
+                        <button class="bundle-btn" data-id1="${item1.id
+          }" data-id2="${item2.id}">Add Bundle</button>
                     </div>
                 </div>
             `;
@@ -1027,6 +1398,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- Search Input and Clear Button Event Handlers ---
   if (gallerySearchInput && searchClearBtn) {
+    const debouncedRender = debounce(() => {
+      renderProducts();
+    }, 250);
+
     gallerySearchInput.addEventListener("input", () => {
       searchQuery = gallerySearchInput.value;
       if (searchQuery.trim().length > 0) {
@@ -1034,7 +1409,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       } else {
         searchClearBtn.style.display = "none";
       }
-      renderProducts();
+      debouncedRender();
     });
 
     searchClearBtn.addEventListener("click", () => {
@@ -1046,7 +1421,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       activeCategory = "all";
       activeTag = "all";
 
-      categoryFilters.forEach((f) => f.classList.remove("active"));
+      categoryFilters.forEach((f) => {
+        f.classList.remove("active");
+        f.style.backgroundColor = "";
+      });
       filterTags.forEach((t) => t.classList.remove("active"));
       const allTagBtn = Array.from(filterTags).find((t) => t.dataset.filter === "all");
       if (allTagBtn) {
@@ -1167,7 +1545,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Only trigger global keyboard nav if carousel is visible and active input/textarea is not focused
       const activeEl = document.activeElement;
       const isInputFocused = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable);
-      
+
       if (isCarouselVisible && !isInputFocused) {
         if (e.key === "ArrowLeft") {
           goToSlide(currentSlide - 1);
@@ -1250,14 +1628,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     startAutoscroll();
   }
 
-  // --- Carousel Details Link Navigation ---
+  // --- Carousel Details & Wishlist Link Navigation ---
   if (carouselContainer) {
     carouselContainer.addEventListener("click", (e) => {
       const detailsBtn = e.target.closest(".view-details-btn");
+      const slideWishlistBtn = e.target.closest(".slide-wishlist-btn");
+
       if (detailsBtn) {
         e.preventDefault();
         const id = parseInt(detailsBtn.dataset.id);
         window.location.href = `product.html?id=${id}`;
+      } else if (slideWishlistBtn) {
+        e.preventDefault();
+        const id = parseInt(slideWishlistBtn.dataset.id);
+        toggleWishlist(id, slideWishlistBtn);
       }
     });
   }
@@ -1330,7 +1714,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (wishlistSet.has(product.id)) {
           pdpWishlistBtn.classList.add("active");
         }
-        
+
         pdpWishlistBtn.addEventListener("click", (e) => {
           e.preventDefault();
           const id = product.id;
@@ -1380,7 +1764,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
 
           addToCart(product.id, selection, quantity);
-          
+
           // Open cart sidebar automatically
           if (cartSidebar && sidebarOverlay) {
             cartSidebar.classList.add("open");
@@ -1404,6 +1788,62 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderWishlist();
   updateCartBadge();
   updateWishlistBadge();
+  // --- Create With Us Form Handler ---
+  const designForm = document.getElementById("designForm");
+  if (designForm) {
+    designForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const designDesc = document.getElementById("designDesc").value;
+      const designName = document.getElementById("designName").value;
+      const designEmail = document.getElementById("designEmail").value;
+      const submitBtn = designForm.querySelector("button[type='submit']");
+      const originalText = submitBtn.textContent;
+
+      submitBtn.textContent = "Submitting...";
+      submitBtn.disabled = true;
+
+      // Remove previous success or error messages
+      const prevMessage = designForm.querySelector(".submit-feedback");
+      if (prevMessage) prevMessage.remove();
+
+      try {
+        const response = await fetch("/api/design-submissions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: designName,
+            email: designEmail,
+            vision: designDesc
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          designForm.reset();
+          const feedback = document.createElement("p");
+          feedback.className = "submit-feedback";
+          feedback.style.cssText = "color: #10b981; margin-top: 1rem; font-weight: 600; font-size: 0.95rem;";
+          feedback.textContent = data.message || "Your vision has been submitted. We'll be in touch!";
+          designForm.appendChild(feedback);
+        } else {
+          throw new Error(data.detail || "Failed to submit vision");
+        }
+      } catch (error) {
+        const feedback = document.createElement("p");
+        feedback.className = "submit-feedback";
+        feedback.style.cssText = "color: #ef4444; margin-top: 1rem; font-weight: 600; font-size: 0.95rem;";
+        feedback.textContent = error.message || "An error occurred. Please try again.";
+        designForm.appendChild(feedback);
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
+  renderNavUser();
 });
 
 if (typeof module !== "undefined" && module.exports) {

@@ -1,2 +1,37 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Node
 node_modules/
-database.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+env/
+
+# Databases
+data/
+*.db
+*.sqlite
+
+# Local env files
+.env
+.env.local
+
+# Build outputs
+dist/

@@ -15,6 +15,7 @@
         <li><a href="/#gallery" data-testid="nav-gallery">Gallery</a>
         <li><a href="#couples" data-testid="nav-couples">Couples</a>
         <li><a href="/#custom" data-testid="nav-custom">Custom & Contact</a>
+        <li><a href="/profile.html" data-testid="nav-profile">My Profile</a>
       </ul>
       <div class="nav-icons"><button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu"
           data-testid="mobile-menu-btn"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
@@ -23,15 +24,15 @@
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg></button> <button class="icon-btn" id="wishlistBtn" data-testid="wishlist-btn"
-          aria-label="Wishlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
+          aria-label="Wishlist"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path
               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
             </path>
           </svg> <span class="badge" id="wishlistBadge" data-testid="wishlist-count"
             style="display:none">0</span></button> <button class="icon-btn" id="cartBtn" data-testid="cart-btn"
-          aria-label="Shopping Cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
+          aria-label="Shopping Cart"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="9" cy="21" r="1"></circle>
             <circle cx="20" cy="21" r="1"></circle>
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -51,18 +52,20 @@
     <section class="gallery-section" id="gallery" data-testid="gallery-section">
       <div class="container">
         <h2 class="section-title" data-testid="gallery-title">The Intellectual Gallery</h2>
-        <div class="gallery-search-wrapper" style="margin-bottom: 2rem; position: relative; max-width: 500px;"><span
-            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none;"><svg
-              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-              stroke-linejoin="round">
+        <div class="gallery-search-wrapper" style="margin-bottom: 2rem; position: relative; max-width: 500px;">
+          <span
+            style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
-            </svg></span><input type="text" id="gallerySearchInput" placeholder="Search products by name or category..."
-            style="width: 100%; background: #121212; border: 1px solid #222; color: #eee; padding: 0.75rem 2.5rem 0.75rem 2.7rem; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s;"
-            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 2px rgba(59,130,246,0.15)'"
-            onblur="this.style.borderColor='#222'; this.style.boxShadow='none'">
-          <button id="searchClearBtn" class="search-clear-btn" aria-label="Clear search">&times;</button></div>
-        
+            </svg>
+          </span>
+          <input type="text" id="gallerySearchInput" class="search-input"
+            placeholder="Search products by name or category...">
+          <button id="searchClearBtn" class="search-clear-btn" aria-label="Clear search">&times;</button>
+        </div>
+
 
         <div class="featured-carousel-container" id="featuredCarouselContainer" tabindex="0">
           <div class="carousel-header">
@@ -85,7 +88,7 @@
                   <div class="slide-content">
                     <div class="slide-image-container">
                       <div class="slide-badge">HOT SELLER</div>
-                      <img src="assets/intellactual.webp" alt="Intellactual Design" class="slide-img">
+                      <img src="assets/intellactual.webp" alt="Intellactual Design" class="slide-img" width="400" height="400">
                     </div>
                     <div class="slide-info">
                       <span class="engagement-tag"><i class="fas fa-fire"></i> 98% Engagement</span>
@@ -99,8 +102,8 @@
                       <div class="slide-actions">
                         <button class="slide-cta-btn view-details-btn" data-id="3">View Details</button>
                         <button class="slide-wishlist-btn" data-id="3">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
                               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
                             </path>
@@ -116,7 +119,7 @@
                   <div class="slide-content">
                     <div class="slide-image-container">
                       <div class="slide-badge">MOST POPULAR</div>
-                      <img src="assets/robo.webp" alt="Robo Design" class="slide-img">
+                      <img src="assets/robo.webp" alt="Robo Design" class="slide-img" width="400" height="400" loading="lazy">
                     </div>
                     <div class="slide-info">
                       <span class="engagement-tag"><i class="fas fa-bolt"></i> 95% Rating</span>
@@ -130,8 +133,8 @@
                       <div class="slide-actions">
                         <button class="slide-cta-btn view-details-btn" data-id="6">View Details</button>
                         <button class="slide-wishlist-btn" data-id="6">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
                               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
                             </path>
@@ -147,7 +150,7 @@
                   <div class="slide-content">
                     <div class="slide-image-container">
                       <div class="slide-badge">TRENDING</div>
-                      <img src="assets/brainrot.webp" alt="Brainrot Design" class="slide-img">
+                      <img src="assets/brainrot.webp" alt="Brainrot Design" class="slide-img" width="400" height="400" loading="lazy">
                     </div>
                     <div class="slide-info">
                       <span class="engagement-tag"><i class="fas fa-chart-line"></i> Viral Pick</span>
@@ -161,8 +164,8 @@
                       <div class="slide-actions">
                         <button class="slide-cta-btn view-details-btn" data-id="1">View Details</button>
                         <button class="slide-wishlist-btn" data-id="1">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
                               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
                             </path>
@@ -178,7 +181,7 @@
                   <div class="slide-content">
                     <div class="slide-image-container">
                       <div class="slide-badge">COUPLE BEST</div>
-                      <img src="assets/couple goals.webp" alt="Couple Goals Design" class="slide-img">
+                      <img src="assets/couple goals.webp" alt="Couple Goals Design" class="slide-img" width="400" height="400" loading="lazy">
                     </div>
                     <div class="slide-info">
                       <span class="engagement-tag"><i class="fas fa-heart"></i> Match Made Perfect</span>
@@ -192,8 +195,8 @@
                       <div class="slide-actions">
                         <button class="slide-cta-btn view-details-btn" data-id="2">View Details</button>
                         <button class="slide-wishlist-btn" data-id="2">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path
                               d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
                             </path>
@@ -244,19 +247,36 @@
           </div>
         </section>
         <div class="filter-bar-wrapper" style="position: relative; margin-bottom: 3rem;">
-          <div class="filter-bar" data-testid="filter-bar"><button class="filter-tag active" data-filter="all"
-              data-testid="filter-all">All Designs</button> <button class="filter-tag" data-filter="intellectual"
-              data-testid="filter-intellectual">#Intellectual</button> <button class="filter-tag"
-              data-filter="spiritual" data-testid="filter-spiritual">#Spiritual</button> <button class="filter-tag"
-              data-filter="nerdy" data-testid="filter-nerdy">#Nerdy</button> <button class="filter-tag"
-              data-filter="crazy" data-testid="filter-crazy">#Crazy</button> <button class="filter-tag"
-              data-filter="design" data-testid="filter-design">#Design</button> <button class="filter-tag"
-              data-filter="couplegoals" data-testid="filter-couple">#CoupleGoals</button> <button class="filter-tag"
-              data-filter="cute" data-testid="filter-cute">#Cute</button></div><button class="filter-scroll-next"
-            style="position: absolute; right: 0; top: 0; bottom: 1rem; width: 60px; background: linear-gradient(to right, transparent, #000 70%); border: none; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; cursor: pointer; transition: opacity 0.3s; pointer-events: auto;"
-            id="filterScrollNextBtn"><svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+
+          <!-- NEW: Left/Prev Arrow Button -->
+          <button class="filter-scroll-prev" id="filterScrollPrevBtn"
+            style="position: absolute; left: 0; top: 0; bottom: 1rem; width: 60px;z-index: 10; background: linear-gradient(to left, transparent, #111 70%); border: none; color: #fff; display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; cursor: pointer; transition: opacity 0.3s; pointer-events: auto; opacity: 0; z-index: 2;">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <!-- UPDATED: Added flex and nowrap to force horizontal scrolling on mobile -->
+          <div class="filter-bar" data-testid="filter-bar"
+            style="display: flex; flex-wrap: nowrap; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;">
+            <button class="filter-tag active" data-filter="all" data-testid="filter-all">All Designs</button>
+            <button class="filter-tag" data-filter="intellectual"
+              data-testid="filter-intellectual">#Intellectual</button>
+            <button class="filter-tag" data-filter="spiritual" data-testid="filter-spiritual">#Spiritual</button>
+            <button class="filter-tag" data-filter="nerdy" data-testid="filter-nerdy">#Nerdy</button>
+            <button class="filter-tag" data-filter="crazy" data-testid="filter-crazy">#Crazy</button>
+            <button class="filter-tag" data-filter="design" data-testid="filter-design">#Design</button>
+            <button class="filter-tag" data-filter="couplegoals" data-testid="filter-couple">#CoupleGoals</button>
+            <button class="filter-tag" data-filter="cute" data-testid="filter-cute">#Cute</button>
+          </div>
+
+          <!-- EXISTING: Right/Next Arrow Button (Added z-index) -->
+          <button class="filter-scroll-next" id="filterScrollNextBtn"
+            style="position: absolute; right: 0; top: 0; bottom: 1rem; width: 60px; background: linear-gradient(to right, transparent, #111 70%); border: none; color: #fff; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; cursor: pointer; transition: opacity 0.3s; pointer-events: auto; z-index: 2;">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"></polyline>
-            </svg></button>
+            </svg>
+          </button>
         </div>
         <div class="products-grid" id="productsGrid" data-testid="products-grid"></div>
       </div>
@@ -309,18 +329,76 @@
   </main>
   <div class="sidebar" id="cartSidebar" data-testid="cart-sidebar"></div>
   <div class="sidebar" id="wishlistSidebar" data-testid="wishlist-sidebar"></div>
+
+  <!-- Login Sidebar -->
+  <div class="sidebar" id="loginSidebar" data-testid="login-sidebar">
+    <div class="sidebar-header">
+      <h3>Your Account</h3>
+      <button class="close-btn" data-action="close-login">&times;</button>
+    </div>
+    <!-- Tab switcher -->
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" data-tab="login">Sign In</button>
+      <button class="auth-tab-btn" data-tab="register">Create Account</button>
+    </div>
+    <div class="sidebar-items" style="padding:1.5rem;flex:1;overflow-y:auto;">
+
+      <!-- Login Panel -->
+      <div id="loginPanel" style="display:flex;flex-direction:column;gap:1.5rem;">
+        <form id="loginForm" style="display:contents;">
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" class="form-input" required autocomplete="email"
+              placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" class="form-input" required autocomplete="current-password"
+              placeholder="••••••••">
+          </div>
+          <button type="submit" class="add-to-cart-btn">Sign In</button>
+        </form>
+      </div>
+
+      <!-- Register Panel -->
+      <div id="registerPanel" style="display:none;flex-direction:column;gap:1.5rem;">
+        <form id="registerForm" style="display:contents;">
+          <div class="form-group">
+            <label for="regEmail">Email Address</label>
+            <input type="email" id="regEmail" class="form-input" required autocomplete="email"
+              placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Password <span style="font-weight:400;color:#888;font-size:0.85rem;">(min 6
+                chars)</span></label>
+            <input type="password" id="regPassword" class="form-input" required autocomplete="new-password"
+              placeholder="••••••••" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="regPhone">Phone Number <span style="font-weight:400;color:#888;font-size:0.85rem;">(10 digits)</span></label>
+            <input type="tel" id="regPhone" class="form-input" required placeholder="1234567890">
+            <span id="reg-phone-error" style="color:#ef4444;font-size:0.85rem;display:none;margin-top:0.25rem;font-weight:600;">Please enter a valid 10-digit phone number</span>
+          </div>
+          <button type="submit" class="add-to-cart-btn">Create Account</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
   <div class="modal" id="productModal" data-testid="product-modal"></div>
-  
+
   <!-- Image Fullscreen Zoom Overlay -->
   <div id="imageZoomOverlay" class="zoom-overlay">
     <button class="zoom-close-btn" id="zoomCloseBtn" aria-label="Close zoom">&times;</button>
     <div class="zoom-image-container" id="zoomImageContainer">
-      <img id="zoomOverlayImage" src="" alt="Zoomed view">
+      <img id="zoomOverlayImage" src="" alt="Zoomed view" width="1200" height="1200">
     </div>
     <div class="zoom-controls">
-      <button class="zoom-control-btn" id="zoomOutBtn" aria-label="Zoom out"><i class="fas fa-search-minus"></i></button>
-      <button class="zoom-control-btn" id="zoomResetBtn" aria-label="Restore zoom"><i class="fas fa-sync-alt"></i> Fit</button>
+      <button class="zoom-control-btn" id="zoomOutBtn" aria-label="Zoom out"><i
+          class="fas fa-search-minus"></i></button>
+      <button class="zoom-control-btn" id="zoomResetBtn" aria-label="Restore zoom"><i class="fas fa-sync-alt"></i>
+        Fit</button>
       <button class="zoom-control-btn" id="zoomInBtn" aria-label="Zoom in"><i class="fas fa-search-plus"></i></button>
     </div>
   </div>

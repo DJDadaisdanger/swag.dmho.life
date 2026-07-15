@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>My Profile - .studio</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .profile-container {
+            max-width: 1000px;
+            margin: 2rem auto 4rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .profile-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            letter-spacing: -.02em;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .profile-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .profile-card {
+            background: #121212;
+            border: 1px solid #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            border-bottom: 1px solid #222;
+            padding-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-value {
+            font-size: 1rem;
+            color: #eee;
+            font-weight: 500;
+        }
+
+        .edit-address-area {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .text-input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            color: #eee;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            min-height: 48px;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            background: #3b82f6;
+            color: #ffffff !important;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #222;
+            color: #ccc !important;
+            margin-left: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+        }
+
+        .order-item-row {
+            border-bottom: 1px solid #1a1a1a;
+            padding: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .order-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .order-id {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .order-date {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .order-items-list {
+            font-size: 0.9rem;
+            color: #ccc;
+            margin-top: 0.25rem;
+        }
+
+        .order-price-status {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .order-total {
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .status-processing {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .status-shipped {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+
+        .status-delivered {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .empty-state {
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <nav class="nav-container">
+            <a href="/" class="logo" style="text-decoration: none; color: #fff;">.studio</a>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/#gallery" data-testid="nav-gallery">Gallery</a></li>
+                <li><a href="/#couples" data-testid="nav-couples">Couples</a></li>
+                <li><a href="/#custom" data-testid="nav-custom">Custom & Contact</a></li>
+                <li><a href="/profile.html" data-testid="nav-profile" style="color: #3b82f6;">My Profile</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="profile-container">
+        <h1 class="profile-title">My Profile</h1>
+        <div class="profile-grid">
+            <!-- Left Column: Details and Address -->
+            <div>
+                <div class="profile-card" id="accountDetailsCard">
+                    <h3>Account Details</h3>
+                    <div id="detailsDisplay">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <div class="form-value" id="profileName">Loading...</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <div class="form-value" id="profileEmail">Loading...</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <div class="form-value" id="profilePhone">Loading...</div>
+                        </div>
+                        <button class="btn" id="editDetailsBtn">Edit Details</button>
+                    </div>
+                    
+                    <div id="detailsEdit" style="display:none;">
+                        <div class="form-group">
+                            <label for="editNameInput">Full Name</label>
+                            <input type="text" class="text-input" id="editNameInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editEmailInput">Email Address</label>
+                            <input type="email" class="text-input" id="editEmailInput" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editPhoneInput">Phone Number</label>
+                            <input type="tel" class="text-input" id="editPhoneInput" required placeholder="1234567890">
+                            <span id="edit-phone-error" style="color:#ef4444;font-size:0.85rem;display:none;margin-top:0.25rem;font-weight:600;">Please enter a valid 10-digit phone number</span>
+                        </div>
+                        <div>
+                            <button class="btn" id="saveDetailsBtn">Save Changes</button>
+                            <button class="btn btn-secondary" id="cancelDetailsBtn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h3>Address Book</h3>
+                    <div class="form-group">
+                        <label>Saved Shipping Address</label>
+                        <div class="form-value" id="displayAddress">Loading...</div>
+                    </div>
+                    <button class="btn" id="editAddressBtn">Edit Address</button>
+                    
+                    <div class="edit-address-area" id="editAddressArea">
+                        <input type="text" class="text-input" id="addressInput" placeholder="Enter shipping address">
+                        <div>
+                            <button class="btn" id="saveAddressBtn">Save</button>
+                            <button class="btn btn-secondary" id="cancelAddressBtn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Orders & Track Order -->
+            <div>
+                <div class="profile-card">
+                    <h3>Order History</h3>
+                    <div id="ordersContainer">
+                        <div class="empty-state">Loading order history...</div>
+                    </div>
+                </div>
+
+                <div class="profile-card">
+                    <h3>Track Your Order</h3>
+                    <div id="trackingContainer">
+                        <div class="empty-state">Loading active orders...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/products.js" defer></script>
+    <script src="js/profile.js" defer></script>
+</body>
+
+</html>

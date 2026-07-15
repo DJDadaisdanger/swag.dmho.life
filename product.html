@@ -17,6 +17,7 @@
         <li><a href="/#gallery" data-testid="nav-gallery">Gallery</a></li>
         <li><a href="/#couples" data-testid="nav-couples">Couples</a></li>
         <li><a href="/#custom" data-testid="nav-custom">Custom & Contact</a></li>
+        <li><a href="/profile.html" data-testid="nav-profile">My Profile</a></li>
       </ul>
       <div class="nav-icons">
         <button class="icon-btn mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu" data-testid="mobile-menu-btn">
@@ -74,7 +75,7 @@
     <div id="productDetailContainer" class="pdp-container" style="display: none;">
       <div class="pdp-image-section">
         <div class="pdp-image-wrapper">
-          <img id="pdpProductImage" src="" alt="Product Image" class="modal-image">
+          <img id="pdpProductImage" src="" alt="Product Image" class="modal-image" width="600" height="600">
         </div>
       </div>
       <div class="pdp-details-section">
@@ -97,7 +98,7 @@
         
         <div class="pdp-actions">
           <button class="add-to-cart-btn pdp-add-cart-btn" id="pdpAddToCartBtn">Add to Cart</button>
-          <button class="wishlist-btn pdp-wishlist-btn" id="pdpWishlistBtn" aria-label="Add to Wishlist">
+          <button class="pdp-wishlist-btn" id="pdpWishlistBtn" aria-label="Add to Wishlist">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
             </svg>
@@ -107,15 +108,64 @@
     </div>
   </main>
 
+  <!-- Sidebars -->
   <div class="sidebar" id="cartSidebar" data-testid="cart-sidebar"></div>
   <div class="sidebar" id="wishlistSidebar" data-testid="wishlist-sidebar"></div>
+
+  <!-- Login Sidebar -->
+  <div class="sidebar" id="loginSidebar" data-testid="login-sidebar">
+    <div class="sidebar-header">
+      <h3>Your Account</h3>
+      <button class="close-btn" data-action="close-login">&times;</button>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab-btn active" data-tab="login">Sign In</button>
+      <button class="auth-tab-btn" data-tab="register">Create Account</button>
+    </div>
+    <div class="sidebar-items" style="padding:1.5rem;flex:1;overflow-y:auto;">
+
+      <div id="loginPanel" style="display:flex;flex-direction:column;gap:1.5rem;">
+        <form id="loginForm" style="display:contents;">
+          <div class="form-group">
+            <label for="loginEmail">Email Address</label>
+            <input type="email" id="loginEmail" class="form-input" required autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" class="form-input" required autocomplete="current-password" placeholder="••••••••">
+          </div>
+          <button type="submit" class="add-to-cart-btn">Sign In</button>
+        </form>
+      </div>
+
+      <div id="registerPanel" style="display:none;flex-direction:column;gap:1.5rem;">
+        <form id="registerForm" style="display:contents;">
+          <div class="form-group">
+            <label for="regEmail">Email Address</label>
+            <input type="email" id="regEmail" class="form-input" required autocomplete="email" placeholder="you@example.com">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">Password <span style="font-weight:400;color:#888;font-size:0.85rem;">(min 6 chars)</span></label>
+            <input type="password" id="regPassword" class="form-input" required autocomplete="new-password" placeholder="••••••••" minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="regPhone">Phone Number <span style="font-weight:400;color:#888;font-size:0.85rem;">(10 digits)</span></label>
+            <input type="tel" id="regPhone" class="form-input" required placeholder="1234567890">
+            <span id="reg-phone-error" style="color:#ef4444;font-size:0.85rem;display:none;margin-top:0.25rem;font-weight:600;">Please enter a valid 10-digit phone number</span>
+          </div>
+          <button type="submit" class="add-to-cart-btn">Create Account</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <!-- Image Fullscreen Zoom Overlay -->
   <div id="imageZoomOverlay" class="zoom-overlay">
     <button class="zoom-close-btn" id="zoomCloseBtn" aria-label="Close zoom">&times;</button>
     <div class="zoom-image-container" id="zoomImageContainer">
-      <img id="zoomOverlayImage" src="" alt="Zoomed view">
+      <img id="zoomOverlayImage" src="" alt="Zoomed view" width="1200" height="1200">
     </div>
     <div class="zoom-controls">
       <button class="zoom-control-btn" id="zoomOutBtn" aria-label="Zoom out"><i class="fas fa-search-minus"></i></button>
