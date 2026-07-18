@@ -43,7 +43,12 @@ The frontend expects a RESTful API returning JSON responses. Authentication shou
 - **POST `/api/checkout`**
   - **Request Body:** `{ "name": "John", "email": "...", "address": "...", "phone": "...", "cart": [...] }`
   - **Response (200 OK):** `{ "message": "Order placed", "order_id": "ORD-00001", "total": 199.00 }`
-  - **Behavior:** Validates prices server-side, creates an order record, clears the user's cart in the DB.
+  - **Behavior:** Validates prices server-side, calculates bundle discounts, creates an order record, clears the user's cart in the DB.
+  - **Critical Pricing Logic (Bundle Discounts):** The backend MUST apply a 10% discount on the following exact pairs when calculating the final total:
+    - **Bundle 1:** Pair A Cover (ID: 9) + Pair A iPad Cover (ID: 12)
+    - **Bundle 2:** Cute Cover (ID: 8) + Cute iPad Cover (ID: 11)
+    - **Bundle 3:** Couple Goals (ID: 2) + Couple Goals (ID: 2)
+    *(Discount applies per pair. E.g., if a user has two of ID 2, they get 10% off both. If they have four, they get 10% off all four, etc.)*
 
 ### 4. User Profile
 

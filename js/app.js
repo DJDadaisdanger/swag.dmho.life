@@ -1005,16 +1005,48 @@ document.addEventListener("DOMContentLoaded", async () => {
         })
         .join("");
 
-      const total = cart.reduce((acc, item) => {
+      let subtotal = cart.reduce((acc, item) => {
         const product = productMap[item.id];
         return acc + product.price * item.quantity;
       }, 0);
 
+      // Calculate bundle discounts
+      const itemCounts = {};
+      cart.forEach(item => {
+        itemCounts[item.id] = (itemCounts[item.id] || 0) + item.quantity;
+      });
+      
+      let discount = 0;
+      
+      // 1. Pair A Cover (9) + Pair A iPad Cover (12)
+      const pairA_count = Math.min(itemCounts[9] || 0, itemCounts[12] || 0);
+      if (pairA_count > 0) {
+        discount += (productMap[9].price + productMap[12].price) * 0.1 * pairA_count;
+      }
+      
+      // 2. Cute Cover (8) + Cute iPad Cover (11)
+      const cute_count = Math.min(itemCounts[8] || 0, itemCounts[11] || 0);
+      if (cute_count > 0) {
+        discount += (productMap[8].price + productMap[11].price) * 0.1 * cute_count;
+      }
+      
+      // 3. Couple Goals (2) + Couple Goals (2)
+      const couple_count = Math.floor((itemCounts[2] || 0) / 2);
+      if (couple_count > 0) {
+        discount += (productMap[2].price * 2) * 0.1 * couple_count;
+      }
+
+      const total = subtotal - discount;
+
       footerHTML = `
                     <div class="cart-total">
                         <span>Total</span>
-                        <span>₹${total.toFixed(2)}</span>
+                        <span>
+                            ${discount > 0 ? `<span style="text-decoration: line-through; color: #888; font-size: 0.9em; margin-right: 8px;">₹${subtotal.toFixed(2)}</span>` : ""}
+                            ₹${total.toFixed(2)}
+                        </span>
                     </div>
+                    ${discount > 0 ? `<div style="color: #10b981; font-size: 0.9em; margin-bottom: 15px;">Bundle Discount Applied: -₹${discount.toFixed(2)}</div>` : ""}
                     <button class="checkout-btn" data-action="checkout">Checkout</button>
                 `;
     }
@@ -1271,9 +1303,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         pairs.push([productMap[9], productMap[12]]);
     }
     
-    // 2nd Bundle: Couple Goals + Couple Goals
-    if (productMap[2]) {
-        pairs.push([productMap[2], productMap[2]]);
+    // 2nd Bundle: Cute Cover + Cute iPad Cover
+    if (productMap[8] && productMap[11]) {
+        pairs.push([productMap[8], productMap[11]]);
     }
 
     couplesGrid.innerHTML = pairs
