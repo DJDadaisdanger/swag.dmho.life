@@ -201,13 +201,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // TODO: Update profile API call
                 throw new Error("Profile update API not implemented");
             } catch (e) {
-                    if (detailsEdit) detailsEdit.style.display = 'none';
-                    if (detailsDisplay) detailsDisplay.style.display = 'block';
-                } else {
-                    const err = await response.json();
-                    alert(`Error: ${err.detail || 'Failed to save changes'}`);
-                }
-            } catch (e) {
                 alert('Failed to update details. Please try again.');
             } finally {
                 saveDetailsBtn.textContent = 'Save Changes';
