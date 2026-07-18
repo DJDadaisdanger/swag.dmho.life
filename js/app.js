@@ -143,88 +143,30 @@ function getCookie(name) {
 
 const BackendAPI = {
   async getUserData() {
-    let wishlist = [];
-    let cart = [];
-    let isLoggedIn = false;
-    let hasSeenLoginPrompt = getCookie("hasSeenLoginPrompt") === "true";
-    let userEmail = null;
-
-    // Always verify auth status from server
-    try {
-      const meRes = await fetch("/api/me");
-      const me = await meRes.json();
-      if (me.authenticated) {
-        isLoggedIn = true;
-        userEmail = me.email;
-        // Load server-side cart/wishlist
-        const cartRes = await fetch("/api/cart");
-        if (cartRes.ok) {
-          const data = await cartRes.json();
-          cart = data.cart || [];
-          wishlist = data.wishlist || [];
-          // Mirror to localStorage so offline use still works
-          localStorage.setItem("cart", JSON.stringify(cart));
-          localStorage.setItem("wishlist", JSON.stringify(wishlist));
-        }
-        return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt, userEmail };
-      }
-    } catch (e) {
-    }
-
-    // Fallback: load from localStorage when not logged in or server unreachable
-    try {
-      const storedWishlist = localStorage.getItem("wishlist");
-      if (storedWishlist) wishlist = JSON.parse(storedWishlist);
-      const storedCart = localStorage.getItem("cart");
-      if (storedCart) cart = JSON.parse(storedCart);
-    } catch (e) {
-    }
-
-    return { wishlist, cart, isLoggedIn, hasSeenLoginPrompt, userEmail };
+    // TODO: Fetch user data (wishlist, cart, authentication status) from backend
+    return { wishlist: [], cart: [], isLoggedIn: false, hasSeenLoginPrompt: false, userEmail: null };
   },
 
   async register(email, password, phone) {
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, phone }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Registration failed");
-    return data;
+    // TODO: Implement registration API call
+    throw new Error("Registration not implemented (waiting for backend).");
   },
 
   async login(email, password) {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || "Invalid email or password");
-    return data;
+    // TODO: Implement login API call
+    throw new Error("Login not implemented (waiting for backend).");
   },
 
   async logout() {
-    await fetch("/api/logout", { method: "POST" });
+    // TODO: Implement logout API call
     localStorage.removeItem("cart");
     localStorage.removeItem("wishlist");
   },
 
   async syncData(cart, wishlist, isLoggedIn) {
+    // TODO: Implement data synchronization with backend
     localStorage.setItem("cart", JSON.stringify(cart));
     localStorage.setItem("wishlist", JSON.stringify(wishlist));
-
-    if (isLoggedIn) {
-      try {
-        await fetch("/api/sync", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cart, wishlist }),
-        });
-      } catch (error) {
-      }
-    }
   },
 };
 

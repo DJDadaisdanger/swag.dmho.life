@@ -6,32 +6,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Check authentication first
     try {
-        const authResponse = await fetch('/api/me');
-        const authData = await authResponse.json();
-        if (!authData.authenticated) {
-            window.location.href = '/?login=true';
-            return;
-        }
-        
-        // Auto-populate Name and Email
-        if (authData.name) {
-            const nameField = document.getElementById('name');
-            if (nameField) nameField.value = authData.name;
-        }
-        if (authData.email) {
-            const emailField = document.getElementById('email');
-            if (emailField) emailField.value = authData.email;
-        }
-        // Auto-populate Address if saved
-        if (authData.address) {
-            const addressField = document.getElementById('address');
-            if (addressField) addressField.value = authData.address;
-        }
-        // Auto-populate Phone if saved
-        if (authData.phone) {
-            const phoneField = document.getElementById('phone');
-            if (phoneField) phoneField.value = authData.phone;
-        }
+        // TODO: Check authentication via backend
+        throw new Error("Backend authentication not implemented");
     } catch (e) {
         alert('Authentication failed. Please log in.');
         window.location.href = '/';
@@ -118,27 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        address,
-                        phone,
-                        cart
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    alert(`Payment successful! Order ID: ${data.order_id}`);
-                    localStorage.removeItem('cart'); // Clear cart
-                    window.location.href = '/';
-                } else {
-                    alert(`Checkout failed: ${data.detail || 'Unknown error'}`);
-                }
+                // TODO: Implement checkout API call
+                throw new Error("Checkout API not implemented (waiting for backend).");
             } catch (error) {
                 alert('An error occurred during checkout. Please try again.');
             } finally {

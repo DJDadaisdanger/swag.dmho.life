@@ -23,12 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 1. Check Authentication First
     try {
-        const authResponse = await fetch('/api/me');
-        const authData = await authResponse.json();
-        if (!authData.authenticated) {
-            window.location.href = '/?login=true';
-            return;
-        }
+        // TODO: Check authentication via backend
+        throw new Error("Backend authentication not implemented");
     } catch (e) {
         window.location.href = '/';
         return;
@@ -37,9 +33,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Fetch Profile Data
     async function loadProfile() {
         try {
-            const response = await fetch('/api/profile');
-            if (!response.ok) throw new Error('Failed to load profile data');
-            const data = await response.json();
+            // TODO: Fetch profile data from backend
+            throw new Error("Profile API not implemented");
 
             // Populate Account Details
             if (profileName) profileName.textContent = data.name || 'Not provided';
@@ -152,21 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveAddressBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/profile/address', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ address: newAddress })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (displayAddress) displayAddress.textContent = data.address;
-                    if (editAddressArea) editAddressArea.style.display = 'none';
-                    if (editAddressBtn) editAddressBtn.style.display = 'inline-flex';
-                } else {
-                    const err = await response.json();
-                    alert(`Error: ${err.detail || 'Failed to save address'}`);
-                }
+                // TODO: Update address API call
+                throw new Error("Address update API not implemented");
             } catch (e) {
                 alert('Failed to update address. Please try again.');
             } finally {
@@ -216,18 +198,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             saveDetailsBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/profile', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, phone })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (profileName) profileName.textContent = data.name;
-                    if (profileEmail) profileEmail.textContent = data.email;
-                    if (profilePhone) profilePhone.textContent = data.phone;
-                    
+                // TODO: Update profile API call
+                throw new Error("Profile update API not implemented");
+            } catch (e) {
                     if (detailsEdit) detailsEdit.style.display = 'none';
                     if (detailsDisplay) detailsDisplay.style.display = 'block';
                 } else {
