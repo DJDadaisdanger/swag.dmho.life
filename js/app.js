@@ -690,6 +690,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveState();
       updateWishlistBadge();
       renderWishlist();
+      renderProducts(); // Ensures product grid is updated
     };
 
     executeWithLoginPrompt(action);
@@ -1159,6 +1160,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       saveState();
       renderWishlist();
       updateWishlistBadge();
+      renderProducts(); // Ensures product grid is updated
     } else if (e.target.dataset.action === "wishlist-move-all") {
       wishlist.forEach(productId => {
         const product = productMap[productId];
@@ -1187,6 +1189,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       renderCart();
       updateWishlistBadge();
       updateCartBadge();
+      renderProducts(); // Ensures product grid is updated
       showNotification("All items moved to cart");
     } else if (e.target.dataset.action === "login") {
       wishlistSidebar.classList.remove("open");
@@ -1673,6 +1676,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           saveState();
           renderWishlist();
           updateWishlistBadge();
+          renderProducts(); // Ensures product grid is updated
         });
       }
 
