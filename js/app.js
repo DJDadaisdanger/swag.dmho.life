@@ -617,7 +617,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const highlightedName = highlightText(product.name, query);
             return `
                     <div class="product-card" data-id="${product.id}" data-action="open-modal">
-                        <button class="wishlist-btn ${wishlistSet.has(product.id) ? "active" : ""
+                        <button id="wishlist-btn-${product.id}" class="wishlist-btn ${wishlistSet.has(product.id) ? "active" : ""
               }">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -1264,23 +1264,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const couplesGrid = document.getElementById("couplesGrid");
     if (!couplesGrid) return;
 
-    // Find all products with the 'couplegoals' tag
-    const coupleProducts = productsByTag["couplegoals"] || [];
-
-    // Ensure we have an even number for pairing
     const pairs = [];
-    for (let i = 0; i < coupleProducts.length; i += 2) {
-      if (i + 1 < coupleProducts.length) {
-        pairs.push([coupleProducts[i], coupleProducts[i + 1]]);
-      }
+    
+    // 1st Bundle: Pair A Cover + Pair A iPad Cover
+    if (productMap[9] && productMap[12]) {
+        pairs.push([productMap[9], productMap[12]]);
     }
-
-    // If we have an odd number, pair the last one with the first one
-    if (coupleProducts.length % 2 !== 0 && coupleProducts.length > 1) {
-      pairs.push([
-        coupleProducts[coupleProducts.length - 1],
-        coupleProducts[0],
-      ]);
+    
+    // 2nd Bundle: Couple Goals + Couple Goals
+    if (productMap[2]) {
+        pairs.push([productMap[2], productMap[2]]);
     }
 
     couplesGrid.innerHTML = pairs
@@ -1308,7 +1301,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     </div>
                     <div class="bundle-price-row">
                         <div>
-                            <span class="old-price">₹${(
+                            <span class="old-price" style="text-decoration: line-through; color: #888; margin-right: 0.5rem; font-size: 0.9rem;">₹${(
             item1.price + item2.price
           ).toFixed(2)}</span>
                             <span class="bundle-price">₹${bundlePrice.toFixed(
