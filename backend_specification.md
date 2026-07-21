@@ -88,12 +88,20 @@ The frontend expects a RESTful API returning JSON responses. Authentication shou
   - **Response (200 OK):** `{ "message": "Your vision has been submitted. We'll be in touch!" }`
   - **Behavior:** Saves custom design requests.
 
+### 6. Products
+
+- **GET `/api/products`**
+  - **Response (200 OK):** `[ { "id": 1, "name": "Brainrot", "price": 199, "image": "assets/brainrot.webp", "category": "T-Shirts", "tags": ["crazy", "design"] }, ... ]`
+  - **Behavior:** Returns the list of all available products.
+  - **Note:** The frontend implements a client-side cache with a TTL (e.g. 5 minutes) to reduce server load for this endpoint.
+
 ## Database Entities (Suggested)
 
 1. **User:** `id`, `email`, `password` (hashed), `name`, `address`, `phone`, `created_at`
 2. **UserData:** `user_id`, `cart` (JSON/Text), `wishlist` (JSON/Text)
 3. **Order:** `id`, `user_id`, `name`, `email`, `address`, `phone`, `cart` (JSON/Text), `total`, `status` (Processing, Shipped, Delivered), `created_at`
 4. **DesignSubmission:** `id`, `customer_name`, `customer_email`, `design_vision`, `status`, `submitted_at`
+5. **Product:** `id`, `name`, `price`, `image_url`, `category`, `tags` (JSON/Text)
 
 ## Implementation Notes
 - Technology stack is entirely up to you (Node.js, Python, Go, etc.).

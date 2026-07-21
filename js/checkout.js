@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    // Fetch products dynamically
+    const products = await (typeof getProducts !== 'undefined' ? getProducts() : window.getProducts());
+
     // Load cart
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
 
@@ -29,8 +32,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         let total = 0;
         cart.forEach(item => {
-            // Find product details from products.js global array
-            const product = typeof products !== 'undefined' ? products.find(p => p.id === item.id) : null;
+            // Find product details from fetched products array
+            const product = products.find(p => p.id === item.id);
             if (!product) return; // Skip if product not found
             
             const orderItem = document.createElement('div');

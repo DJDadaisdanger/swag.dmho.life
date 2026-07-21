@@ -1,110 +1,41 @@
-const products = [
-  {
-    id: 1,
-    name: "Brainrot",
-    price: 199,
-    image: "assets/brainrot.webp",
-    category: "T-Shirts",
-    tags: ["crazy", "design"],
-  },
-  {
-    id: 2,
-    name: "Couple Goals",
-    price: 299,
-    image: "assets/couple goals.webp",
-    category: "T-Shirts",
-    tags: ["couplegoals"],
-  },
-  {
-    id: 3,
-    name: "Intellactual",
-    price: 249,
-    image: "assets/intellactual.webp",
-    category: "T-Shirts",
-    tags: ["intellectual", "design"],
-  },
-  {
-    id: 4,
-    name: "Mug",
-    price: 149,
-    image: "assets/mug.webp",
-    category: "Mugs",
-    tags: ["nerdy", "design"],
-  },
-  {
-    id: 5,
-    name: "Nerdy",
-    price: 229,
-    image: "assets/nerdy.webp",
-    category: "T-Shirts",
-    tags: ["nerdy", "design"],
-  },
-  {
-    id: 6,
-    name: "Robo",
-    price: 279,
-    image: "assets/robo.webp",
-    category: "T-Shirts",
-    tags: ["nerdy", "design"],
-  },
-  {
-    id: 7,
-    name: "T Sherting",
-    price: 199,
-    image: "assets/t sherting.webp",
-    category: "T-Shirts",
-    tags: ["intellectual", "design"],
-  },
-  {
-    id: 8,
-    name: "Cute Cover",
-    price: 399,
-    image: "assets/covers/cute.webp",
-    category: "Phone Covers",
-    tags: ["cute", "design"],
-  },
-  {
-    id: 9,
-    name: "Pair A Cover",
-    price: 459,
-    image: "assets/covers/pair A.webp",
-    category: "Phone Covers",
-    tags: ["couplegoals", "design"],
-  },
-  {
-    id: 10,
-    name: "Totem Cover",
-    price: 429,
-    image: "assets/covers/totem.webp",
-    category: "Phone Covers",
-    tags: ["spiritual", "design"],
-  },
-  {
-    id: 11,
-    name: "Cute iPad Cover",
-    price: 599,
-    image: "assets/covers/cute.webp",
-    category: "iPad Covers",
-    tags: ["cute", "design"],
-  },
-  {
-    id: 12,
-    name: "Pair A iPad Cover",
-    price: 659,
-    image: "assets/covers/pair A.webp",
-    category: "iPad Covers",
-    tags: ["couplegoals", "design"],
-  },
-  {
-    id: 13,
-    name: "Totem iPad Cover",
-    price: 629,
-    image: "assets/covers/totem.webp",
-    category: "iPad Covers",
-    tags: ["spiritual", "design"],
-  },
-];
+const PRODUCTS_CACHE_KEY = 'swag_products_cache';
+const PRODUCTS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+async function getProducts() {
+  const cachedData = localStorage.getItem(PRODUCTS_CACHE_KEY);
+  if (cachedData) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      if (Date.now() - parsed.timestamp < PRODUCTS_CACHE_TTL) {
+        return parsed.products;
+      }
+    } catch (e) {
+      console.warn("Failed to parse cached products", e);
+    }
+  }
+
+  try {
+    const response = await fetch('/api/products');
+    if (response.ok) {
+      const products = await response.json();
+      localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify({
+        timestamp: Date.now(),
+        products: products
+      }));
+      return products;
+    } else {
+      console.error("Failed to fetch products from backend", response.status);
+    }
+  } catch (error) {
+    console.error("Error fetching products:", error);
+  }
+
+  // Fallback in case of error (could return static mock data here for dev)
+  return [];
+}
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = products;
+  module.exports = getProducts;
+} else {
+  window.getProducts = getProducts;
 }

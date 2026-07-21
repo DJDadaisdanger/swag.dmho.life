@@ -30,7 +30,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // 2. Fetch Profile Data
+    // 2. Fetch Products
+    const products = await (typeof getProducts !== 'undefined' ? getProducts() : window.getProducts());
+
+    // 3. Fetch Profile Data
     async function loadProfile() {
         try {
             // TODO: Fetch profile data from backend
@@ -71,9 +74,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const trackingFragment = document.createDocumentFragment();
 
         orders.forEach(order => {
-            // Map items using global products array from products.js
+            // Map items using fetched products array
             const itemsList = order.items.map(item => {
-                const p = typeof products !== 'undefined' ? products.find(prod => prod.id === item.id) : null;
+                const p = products.find(prod => prod.id === item.id);
                 const pName = p ? p.name : `Product #${item.id}`;
                 return `${pName} (${item.selection}) x ${item.quantity}`;
             }).join(', ');
